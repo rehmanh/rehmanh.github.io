@@ -1,0 +1,115 @@
+---
+---
+
+@import "whiteglass";
+
+html {
+  height: 100%;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+body {
+  position: relative;
+  margin: 0;
+  min-height: 100%;
+  font-family: 'Montserrat', sans-serif;
+}
+
+hr {
+  height: 2px;
+}
+
+.logo {
+  height: 3px;
+  width: 3px;
+  display: inline-block;
+  margin-left: 1px;
+  margin-right: 1px;
+  background-color: rgb(207, 79, 37);
+  border-radius: 50%;
+  border: 1.5px solid rgb(207, 79, 37);
+}
+
+.site-title {
+  transition: all .2s ease-in-out; 
+}
+
+.site-title:hover {
+  text-decoration: none;
+  transform: scale(1.1);
+}
+
+nav > a:hover {
+  text-decoration: none;
+}
+
+nav > a {
+  border-bottom: 2px solid rgba(207, 79, 37, 0.7);
+}
+
+.page-content {
+  padding: 50px 0px;
+}
+
+.post-archives > li {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.post-link:hover {
+  text-decoration: none;
+}
+
+.post-link {
+  border-bottom: 2px solid rgba(207, 79, 37, 0.7);
+}
+
+.post-link:visited {
+  color: rgb(66, 66, 66);
+}
+
+.site-footer {
+ 	position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0; 
+  padding: 1rem;
+}
+
+.internal-link > a {
+  text-decoration: none;
+  border-bottom: 2px solid rgba(207, 79, 37, 0.7);  
+  color: black; 
+}
+
+.internal-link > a:hover {
+  border-bottom: 2px solid rgba(207, 79, 37, 0.7);  
+}
+
+.separator {
+  color: rgb(207, 79, 37);
+}
+
+
+@media screen and (max-width: 768px) {
+  .site-title {
+    width: 100%;
+    text-align: center;
+  }
+
+  .site-nav {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .site-nav .page-link {
+    padding: 0;
+  }
+}

@@ -1,0 +1,9 @@
+{% assign feed_path = "/feed.xml" %}
+{% if site.feed and site.feed.path %}
+  {% assign feed_path = site.feed.path %}
+{% endif %}
+Subscribe via <a href="{{ feed_path | absolute_url }}">RSS</a>
+<br>
+&copy; 2018 {{ site.author }} 
+<br>
+Powered by <a href="https://jekyllrb.com">Jekyll</a> &amp; <a href="https://github.com/yous/whiteglass">yous' whiteglass</a>
