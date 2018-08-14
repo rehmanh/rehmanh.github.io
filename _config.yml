@@ -28,6 +28,7 @@ author_email: io.rehmanh@gmail.com
 # Build settings
 markdown: kramdown
 theme: jekyll-whiteglass
+remote_theme: yous/whiteglass
 plugins:
   - jekyll-feed
   - jekyll-archives
