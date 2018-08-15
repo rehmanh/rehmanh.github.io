@@ -14,6 +14,6 @@ I enjoy drinking coffee, going for long drives and cooking. I'm also a huge musi
 
 <hr>
 
-You can <span class="internal-link">[download my resume here]({{site.url}}/assets/Habib_ur_rehman_resume.pdf)</span>.
+You can <span class="internal-link">[download my resume here]({{site.url}}/assets/Habib_ur_Rehman_Resume.pdf)</span>.
 
 If you'd like to get to get a hold of me, feel free to send me an email to <span class="internal-link">[io.rehmanh@gmail.com](mailto:io.rehmanh@gmail.com)</span>.
