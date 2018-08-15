@@ -18,6 +18,8 @@ layout: default
 
   {% capture site_lang %}{{ site.lang | default: "en" }}{% endcapture %}
 
+  <h1>Posts</h1>
+
   <ul class="post-archives">
     {% for post in site.posts %}
       {% capture post_lang %}{{ post.lang | default: site_lang }}{% endcapture %}
