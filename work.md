@@ -2,6 +2,7 @@
 layout: work
 title: "Work"
 permalink: /work/
+published: false
 ---
 
 Here are some personal projects that I have worked on. All of them are open source, so if you're interested in something, feel free 

@@ -13,7 +13,7 @@
 # you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: Habib's Programming Blog 
+title: What I Learned Today 
 email: your-email@example.com
 description: Habib ur Rehman's programming blog. I am a Computer Science – Software Engineering student at the University of Wisconsin – Eau Claire. This blog is about my experinces with technology, and how specific solutions or issues have helped me find my path to becoming a better programmer.
 baseurl: "" # the subpath of your site, e.g. /blog
@@ -31,19 +31,22 @@ plugins:
   - jekyll-archives
   - jekyll-seo-tag
   - jekyll-sitemap
+  - jekyll-category-pages
 
 permalink: /:year/:month/:day/:title/
 paginate_path: /posts/:num/
 paginate: 5
+
+permalink: /:year/:month/:day/:title:output_ext
 
 jekyll-archives:
   enabled:
     - categories
     - tags
   layout: category_archives
-#   permalinks:
-#     category: /categories/:name/
-#     tag: /tags/:name/
+  permalinks:
+    category: /categories/:name/
+    tag: /tags/:name/
 
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list

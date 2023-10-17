@@ -2,7 +2,8 @@
 layout: post
 title: "Scraping Apple's Refurb Store with Ruby"
 date: 2018-09-20 09:00 -0500
-categories: ruby apple iphone gmail gem nokogiri parsing regex cronjob cron crontab
+categories: [ruby, cronjob, apple]
+tags: [meta, introduction]
 ---
 
 Last week Apple announced their new lineup of iPhones, just like they do every year. This time though, it seems like they're pushing to make $1000+ smartphones the norm. They've also completely removed fingerprint authentication from their phones in favor of Face ID, which they claim is more secure. If you're like me and you don't want to spend an absurd amount of money on a phone, and want fingerprint authentication, chances are that you're better off purchasing an older, marked-down iPhone model.  
@@ -105,8 +106,4 @@ This means 'run the file at the specified path from the bash environment at the 
 ---
 
 We can see that by using a few lines of code and by utilizing a couple of rubygems and CRON, we can set up a system that scrapes a particular web resource and notifies us when something that we're interested on that resource becomes available. That seems like a very powerful implementation and a pretty big win to me! Now, when the iPhone becomes available on the refurb store, and depending on how frequently you set up your cronjob to execute, you can be pretty darn sure that you'll be one of the first ones to be notified.
-
-Cheers,
-
-– rehmanh
 

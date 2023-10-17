@@ -1,20 +1,13 @@
 ---
 layout: default
 ---
-<!-- This file contains the layout for archives as well -->
 <div class="home">
 
-  <p>
-    
-  </p>
-
-  <hr>
+  <h1 class="page-heading">{% include i18n.html value="archive" default="Blog Archive" %}</h1>
 
   {{ content }}
 
   {% capture site_lang %}{{ site.lang | default: "en" }}{% endcapture %}
-
-  <h1>Posts</h1>
 
   <ul class="post-archives">
     {% for post in site.posts %}
@@ -23,7 +16,7 @@ layout: default
 
       <li>
         <span class="post-meta">
-          {{ post.date | date: "%b %-d, %Y" }}
+          {% include date.html date=post.date lang=lang %}
           {% if post.categories != empty or post.tags != empty %}
             {% include category_links.html categories=post.categories tags=post.tags %}
           {% endif %}
@@ -42,4 +35,5 @@ layout: default
       </li>
     {% endfor %}
   </ul>
+
 </div>
