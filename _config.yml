@@ -7,38 +7,74 @@
 #
 # For technical reasons, this file is *NOT* reloaded automatically when you use
 # 'bundle exec jekyll serve'. If you change this file, please restart the server process.
-
+#
+# If you need help with YAML syntax, here are some quick references for you:
+# https://learn-the-web.algonquindesign.ca/topics/markdown-yaml-cheat-sheet/#yaml
+# https://learnxinyminutes.com/docs/yaml/
+#
 # Site settings
 # These are used to personalize your new site. If you look in the HTML files,
 # you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: What I Learned Today 
-email: your-email@example.com
-description: Habib ur Rehman's programming blog. I am a Computer Science – Software Engineering student at the University of Wisconsin – Eau Claire. This blog is about my experinces with technology, and how specific solutions or issues have helped me find my path to becoming a better programmer.
+
+title: • • •
+description: A programming blog
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "http://rehmanh.io" # the base hostname & protocol for your site, e.g. http://example.com
-github_username:  rehmanh
+url: "https://rehmanh.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+lang: en
+timezone: EDT
 author: Habib ur Rehman
-author_email: io.rehmanh@gmail.com
+
+# Social media
+google_analytics:
+comments: false
 
 # Build settings
-markdown: kramdown
 theme: jekyll-whiteglass
-remote_theme: yous/whiteglass
 plugins:
-  - jekyll-feed
   - jekyll-archives
-  - jekyll-seo-tag
+  - jekyll-paginate
   - jekyll-sitemap
   - jekyll-category-pages
 
+# Exclude from processing.
+# The following items will not be processed, by default.
+# Any item listed under the `exclude:` key here will be automatically added to
+# the internal "default list".
+#
+# Excluded items can be processed by explicitly listing the directories or
+# their entries' file path in the `include:` list.
+#
+# exclude:
+#   - .sass-cache/
+#   - .jekyll-cache/
+#   - gemfiles/
+#   - Gemfile
+#   - Gemfile.lock
+#   - node_modules/
+#   - vendor/bundle/
+#   - vendor/cache/
+#   - vendor/gems/
+#   - vendor/ruby/
+exclude:
+  - README.md
+
+# Outputting
 permalink: /:year/:month/:day/:title/
-paginate_path: /posts/:num/
-paginate: 5
 
-permalink: /:year/:month/:day/:title:output_ext
+# Markdown settings
+markdown: kramdown
+excerpt_separator: "<!-- more -->"
+kramdown:
+  auto_ids: false
+  enable_coderay: false
+  entity_output: as_char
+  footnote_nr: 1
+  smart_quotes: lsquo,rsquo,ldquo,rdquo
+  toc_levels: 1..6
 
+# jekyll-archives
 jekyll-archives:
   enabled:
     - categories
@@ -48,14 +84,6 @@ jekyll-archives:
     category: /categories/:name/
     tag: /tags/:name/
 
-# Exclude from processing.
-# The following items will not be processed, by default. Create a custom list
-# to override the default setting.
-# exclude:
-#   - Gemfile
-#   - Gemfile.lock
-#   - node_modules
-#   - vendor/bundle/
-#   - vendor/cache/
-#   - vendor/gems/
-#   - vendor/ruby/
+# jekyll-paginate
+paginate_path: /posts/:num/
+paginate: 5

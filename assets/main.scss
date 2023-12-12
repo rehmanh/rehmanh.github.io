@@ -1,115 +1,76 @@
 ---
+# Only the main Sass file needs front matter (the dashes are enough)
 ---
+@charset "utf-8";
 
-@import "whiteglass";
+// Our variables
+$base-font-family: Bitter, "Apple SD Gothic Neo", AppleGothic, NanumBarunGothic, "Malgun Gothic", Dotum, sans-serif;
+$monospace-font-family: Monaco, Menlo, Consolas, "Courier New", DotumChe, monospace;
+$base-font-size:   16px;
+$base-font-weight: 400;
+$small-font-size:  $base-font-size * 0.875;
+$base-line-height: 1.5;
 
-html {
-  height: 100%;
-}
+$spacing-unit:     30px;
 
-*,
-*:before,
-*:after {
-  box-sizing: inherit;
-}
+$text-color:       #111;
+$background-color: #fdfdfd;
+$brand-color:      #2568ba;
 
-body {
-  position: relative;
-  margin: 0;
-  min-height: 100%;
-  font-family: 'Montserrat', sans-serif;
-}
+$grey-color:       #757575;
+$grey-color-light: lighten($grey-color, 45%);
+$grey-color-dark:  darken($grey-color, 20%);
 
-hr {
-  height: 2px;
-}
+// Width of the content area
+$content-width:    800px;
+
+$on-palm:          600px;
+$on-laptop:        800px;
 
 .logo {
-  height: 3px;
-  width: 3px;
-  display: inline-block;
-  margin-left: 1px;
-  margin-right: 1px;
-  background-color: rgb(207, 79, 37);
-  border-radius: 50%;
-  border: 1.5px solid rgb(207, 79, 37);
+    height: 3px;
+    width: 3px;
+    display: inline-block;
+    margin-left: 1px;
+    margin-right: 1px;
+    background-color: rgb(207, 79, 37);
+    border-radius: 50%;
+    border: 1.5px solid rgb(207, 79, 37);
 }
 
 .site-title {
-  transition: all .2s ease-in-out; 
+    transition: all .2s ease-in-out; 
 }
 
 .site-title:hover {
-  text-decoration: none;
-  transform: scale(1.1);
+    text-decoration: none;
+    transform: scale(1.1);
 }
 
 nav > a:hover {
-  text-decoration: none;
+    text-decoration: none;
 }
-
-nav > a {
-  border-bottom: 2px solid rgba(207, 79, 37, 0.7);
-}
-
-.page-content {
-  padding: 50px 0px;
-}
-
-.post-archives > li {
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-.post-link:hover {
-  text-decoration: none;
-}
-
-.post-link {
-  border-bottom: 2px solid rgba(207, 79, 37, 0.7);
-}
-
-.post-link:visited {
-  color: rgb(66, 66, 66);
-}
-
-.site-footer {
- 	position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0; 
-  padding: 1rem;
-}
-
-.internal-link > a {
-  text-decoration: none;
-  border-bottom: 2px solid rgba(207, 79, 37, 0.7);  
-  color: black; 
-}
-
-.internal-link > a:hover {
-  border-bottom: 2px solid rgba(207, 79, 37, 0.7);  
-}
-
-.separator {
-  color: rgb(207, 79, 37);
+  
+  nav > a {
+    border-bottom: 2px solid rgba(207, 79, 37, 0.7);
 }
 
 
-@media screen and (max-width: 768px) {
-  .site-title {
-    width: 100%;
-    text-align: center;
-  }
-
-  .site-nav {
-    width: 100%;
-    text-align: center;
+// whiteglass also includes a mixin for defining media queries.
+// Use media queries like this:
+// @include media-query($on-palm) {
+//     .wrapper {
+//         padding-right: $spacing-unit * 0.5;
+//         padding-left: $spacing-unit * 0.5;
+//     }
+// }
+@mixin media-query($device) {
+  @media screen and (max-width: $device) {
+    @content;
   }
 }
 
-@media screen and (max-width: 600px) {
-  .site-nav .page-link {
-    padding: 0;
-  }
-}
+
+
+// Import partials from the `whiteglass` theme.
+@import "whiteglass";

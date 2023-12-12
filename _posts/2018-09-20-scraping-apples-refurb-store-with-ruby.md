@@ -2,8 +2,11 @@
 layout: post
 title: "Scraping Apple's Refurb Store with Ruby"
 date: 2018-09-20 09:00 -0500
-categories: [ruby, cronjob, apple]
-tags: [meta, introduction]
+categories: programming
+tags:
+  - ruby
+  - automation
+  - cronjob
 ---
 
 Last week Apple announced their new lineup of iPhones, just like they do every year. This time though, it seems like they're pushing to make $1000+ smartphones the norm. They've also completely removed fingerprint authentication from their phones in favor of Face ID, which they claim is more secure. If you're like me and you don't want to spend an absurd amount of money on a phone, and want fingerprint authentication, chances are that you're better off purchasing an older, marked-down iPhone model.  
@@ -11,6 +14,8 @@ Last week Apple announced their new lineup of iPhones, just like they do every y
 If you want to save even more money (like myself) and still want a premium Apple warranty, you buy refurbished! The nice thing about refurbished Apple products is that they are in essence, products that were originally in great condition – either returned by unhappy customers or pulled from Apple's display units in stores. The refurbishment process includes swapping the old battery for a new one, wiping the phone clean and replacing parts that had cosmetic damage. So what you end up getting is basically a brand new device for cheap. The thing about these refurbished devices though, is that people seem to jump on them very quickly, so they sell out just as fast. What we are going to do is devise a system that will notify us when the iPhone 8 is available for purchase on Apple's Refurbished Store. Let's get started! 
 
 I'm going to be using Ruby to scrape the Apple Store site, simply because the use of gems and the syntax makes it very easy to perform this action in a minimal amount of code. The gems that I am going to be using are 'open-uri' to access files on the web, 'nokogiri' to collect information from HTML pages and 'gmail' to create a notification system. 
+
+<!-- more -->
 
 ### 1. Set up
 
