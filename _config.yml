@@ -36,6 +36,7 @@ plugins:
   - jekyll-archives
   - jekyll-paginate
   - jekyll-sitemap
+  - jekyll-category-pages
 
 # Exclude from processing.
 # The following items will not be processed, by default.
