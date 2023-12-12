@@ -1,66 +1,54 @@
 ---
 layout: default
 ---
-<!-- This file contains the layout for archives as well -->
+
 <div class="home">
-
   <p>
-    Welcome! My name is Habib. 
+    
   </p>
-  <p>
-    This is where I talk about programming-related topics for technologies I am interested in. If something inspired me or helped me solve
-    (or create) a problem, it's likely to end up on this blog. I hope you can find something of use here to apply to your own feats of programming.
-  </p>
-
-  <hr>
-
+  <br>
   {{ content }}
 
   {% capture site_lang %}{{ site.lang | default: "en" }}{% endcapture %}
 
-  <h1>Posts</h1>
-
-  <ul class="post-archives">
-    {% for post in site.posts %}
+  <ul class="post-list">
+    {% for post in paginator.posts %}
       {% capture post_lang %}{{ post.lang | default: site_lang }}{% endcapture %}
       {% capture lang %}{% if post_lang != site_lang %}{{ post_lang }}{% endif %}{% endcapture %}
 
-      <li>
-        <span class="post-meta">
-          {{ post.date | date: "%b %-d, %Y" }}
-          {% if post.categories != empty or post.tags != empty %}
-            {% include category_links.html categories=post.categories tags=post.tags %}
-          {% endif %}
-          {% if post.external-url %}
-            • <a href="{{ post.url | relative_url }}">Permalink</a>
-          {% endif %}
-        </span>
+      <li{% if lang != empty %} lang="{{ lang }}"{% endif %}>
+        <header class="post-header">
+          <h1 class="post-title">
+            {% if post.external-url %}
+              <a class="post-link" href="{{ post.external-url }}">{{ post.title | escape }} &rarr;</a>
+            {% else %}
+              <a class="post-link" href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
+            {% endif %}
+          </h1>
 
-        <h2>
-          {% if post.external-url %}
-            <a class="post-link" href="{{ post.external-url }}">{{ post.title | escape }} &rarr;</a>
-          {% else %}
-            <a class="post-link" href="{{ post.url | relative_url }}"{% if lang != empty %} lang="{{ lang }}"{% endif %}>{{ post.title | escape }}</a>
-          {% endif %}
-        </h2>
+          <p class="post-meta">
+            {% include date.html date=post.date lang=lang %}
+            {% if post.categories != empty or post.tags != empty %}
+              {% include category_links.html categories=post.categories tags=post.tags %}
+            {% endif %}
+            {% if post.external-url %}
+              • <a href="{{ post.url | relative_url }}">Permalink</a>
+            {% endif %}
+          </p>
+        </header>
+
+        <div class="post-content">
+          {{ post.excerpt }}
+        </div>
+        {% if post.content contains site.excerpt_separator %}
+          <p class="post-continue">
+            <a href="{{ post.url | relative_url }}">{% include i18n.html lang=lang value="morelink" default="Read on" %} &rarr;</a>
+          </p>
+        {% endif %}
       </li>
     {% endfor %}
   </ul>
-  
-  <hr>
 
-  <p>
-    <h3>Top 10 Albums/LPs of 2018</h3>  
-    9. <strong>COLLIDE</strong> &ndash; tydi <br>
-    8. <strong>Solace</strong> &ndash; RUFUS DU SOL <br>
-    7. <strong>NOT ALL HEROES WEAR CAPES</strong> &ndash; Metro Boomin <br>
-    6. <strong>Wide-Eyed</strong> &ndash; Said the Sky <br>
-    5. <strong>Oxnard</strong> &ndash; Anderson .Paak <br>
-    4. <strong>DIME TRAP</strong> &ndash; T.I. <br>
-    3. <strong>Not All The Beautiful Things</strong> &ndash; What So Not <br>
-    2. <strong>Ballads 1</strong> &ndash; Joji <br>
-    1. <strong>NOVA</strong> &ndash; RL Grime <br>
-    0. <strong>Ringo's Desert</strong> &ndash; ZHU
-  </p>
+  {% include pagination.html %}
 
 </div>
