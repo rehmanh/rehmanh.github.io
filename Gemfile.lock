@@ -33,6 +33,9 @@ GEM
       webrick (~> 1.7)
     jekyll-archives (2.2.1)
       jekyll (>= 3.6, < 5.0)
+    jekyll-category-pages (1.1.2)
+      jekyll (~> 4.0)
+      jekyll-paginate (~> 1.1, >= 1.0.0)
     jekyll-paginate (1.1.0)
     jekyll-sass-converter (3.0.0)
       sass-embedded (~> 1.54)
@@ -82,11 +85,12 @@ PLATFORMS
 
 DEPENDENCIES
   jekyll (~> 4.1)
+  jekyll-category-pages
+  jekyll-paginate
   jekyll-whiteglass
   tzinfo (~> 1.2)
   tzinfo-data
   wdm (~> 0.1.1)
 
 BUNDLED WITH
-   2.4.20
    2.4.20
