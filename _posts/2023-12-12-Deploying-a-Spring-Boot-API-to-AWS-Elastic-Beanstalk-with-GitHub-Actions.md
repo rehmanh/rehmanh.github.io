@@ -159,10 +159,15 @@ Now that you've set up a GitHub Actions workflow, we will create a connection be
 
 Now that we have our AWS IAM user set up, we will add the IAM access key and access key secret to the GitHub repository:
 1. Navigate to the repository landing page and click on the "Settings" tab
+
 2. Under the "Security" option in the sidebar, select "Secrets and Variables", then "Codespaces"
+
 3. Click on "New repository secret"
+
 4. Enter the Names and Values of the secrets. Make sure to create meaningful names for the secrets, something like `IAM_ACCESS_KEY` and `IAM_ACCESS_KEY_SECRET`
+
 5. If you have other sensitive application secrets, such as the Spring datasource strings, database connections strings or API keys, this is a good time to enter those as well.
+
 6. Add and save the secrets.
 
 This will allow you to access the secrets from the workflow file, while abstracting the values of the secrets from the public eye. For more information about repository secrets, check out [the official documentation from GitHub](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions).
