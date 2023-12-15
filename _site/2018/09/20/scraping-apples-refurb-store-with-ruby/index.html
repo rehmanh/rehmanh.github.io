@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  
+  
+  
+    <title>• • • | Scraping Apple&#39;s Refurb Store with Ruby</title>
+  
+  <meta name="description" content="Last week Apple announced their new lineup of iPhones, just like they do every year. This time though, it seems like they’re pushing to make $1000+ smartphones the norm. They’ve also completely removed fingerprint authentication from their phones in favor of Face ID, which they claim is more secure. If you’re like me and you don’t want to spend an absurd amount of money on a phone, and want fingerprint authentication, chances are that you’re better off purchasing an older, marked-down iPhone model. If you want to save even more money (like myself) and still want a premium Apple warranty, you buy refurbished! The nice thing about refurbished Apple products is that they are in essence, products that were originally in great condition – either returned by unhappy customers or pulled from Apple’s display units in stores. The refurbishment process includes swapping the old battery for a new one, wiping the phone clean and replacing parts that had cosmetic damage. So what you end up getting is basically a brand new device for cheap. The thing about these refurbished devices though, is that people seem to jump on them very quickly, so they sell out just as fast. What we are going to do is devise a system that will notify us when the iPhone 8 is available for purchase on Apple’s Refurbished Store. Let’s get started!">
+  
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/2018/09/20/scraping-apples-refurb-store-with-ruby/">
+  
+  
+  <link rel="alternate" type="application/rss+xml" title="• • •" href="http://localhost:4000/feed.xml">
+
+  <link rel="apple-touch-icon" sizes="57x57" href="/favicons/apple-icon-57x57.png">
+<link rel="apple-touch-icon" sizes="60x60" href="/favicons/apple-icon-60x60.png">
+<link rel="apple-touch-icon" sizes="72x72" href="/favicons/apple-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="76x76" href="/favicons/apple-icon-76x76.png">
+<link rel="apple-touch-icon" sizes="114x114" href="/favicons/apple-icon-114x114.png">
+<link rel="apple-touch-icon" sizes="120x120" href="/favicons/apple-icon-120x120.png">
+<link rel="apple-touch-icon" sizes="144x144" href="/favicons/apple-icon-144x144.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/favicons/apple-icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-icon-180x180.png">
+<link rel="icon" type="image/png" sizes="192x192"  href="/favicons/android-icon-192x192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicons/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png">
+<link rel="manifest" href="/favicons/manifest.json">
+<meta name="msapplication-TileColor" content="#ffffff">
+<meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+<meta name="theme-color" content="#ffffff">
+
+
+  
+  <meta name="twitter:card" content="summary">
+  
+  <meta name="twitter:title" content="Scraping Apple&#39;s Refurb Store with Ruby">
+  <meta name="twitter:description" content="Last week Apple announced their new lineup of iPhones, just like they do every year. This time though, it seems like they’re pushing to make $1000+ smartphones the norm. They’ve also completely rem...">
+  
+  
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css?family=Montserrat:400,400i,700" rel="stylesheet">
+
+  
+
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" style="font-size: 42px; font-weight: 400; color: black;" href="/">
+      <div style="margin-left: 3px;" class="logo"></div><div class="logo"></div><div class="logo"></div>
+    </a>
+
+    <nav class="site-nav">
+      
+        
+        <a class="page-link internal-link" href="/about/">About</a>
+      
+        
+        <a class="page-link internal-link" href="/archives/">Archives</a>
+      
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    
+      <h1 class="post-title" itemprop="name headline">Scraping Apple&#39;s Refurb Store with Ruby</h1>
+    
+    <p class="post-meta"><time datetime="2018-09-20T14:00:00+00:00" itemprop="datePublished">Sep 20, 2018</time> •
+  
+    
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+        <a href="/categories/programming/">programming</a>
+      
+    
+      
+    
+  
+
+
+ •
+  
+    
+    
+      
+    
+      
+    
+      
+        <a href="/tags/ruby/">ruby</a>,
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  
+    
+    
+      
+    
+      
+    
+      
+    
+      
+        <a href="/tags/automation/">automation</a>,
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  
+    
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+        <a href="/tags/cronjob/">cronjob</a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  
+</p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Last week Apple announced their new lineup of iPhones, just like they do every year. This time though, it seems like they’re pushing to make $1000+ smartphones the norm. They’ve also completely removed fingerprint authentication from their phones in favor of Face ID, which they claim is more secure. If you’re like me and you don’t want to spend an absurd amount of money on a phone, and want fingerprint authentication, chances are that you’re better off purchasing an older, marked-down iPhone model.</p>
+
+<p>If you want to save even more money (like myself) and still want a premium Apple warranty, you buy refurbished! The nice thing about refurbished Apple products is that they are in essence, products that were originally in great condition – either returned by unhappy customers or pulled from Apple’s display units in stores. The refurbishment process includes swapping the old battery for a new one, wiping the phone clean and replacing parts that had cosmetic damage. So what you end up getting is basically a brand new device for cheap. The thing about these refurbished devices though, is that people seem to jump on them very quickly, so they sell out just as fast. What we are going to do is devise a system that will notify us when the iPhone 8 is available for purchase on Apple’s Refurbished Store. Let’s get started!</p>
+
+<!-- more -->
+
+<p>I’m going to be using Ruby to scrape the Apple Store site, simply because the use of gems and the syntax makes it very easy to perform this action in a minimal amount of code. The gems that I am going to be using are ‘open-uri’ to access files on the web, ‘nokogiri’ to collect information from HTML pages and ‘gmail’ to create a notification system.</p>
+
+<h3>1. Set up</h3>
+
+<p>First, install all the gems that you’ll need for this to work. I am using the ‘gmail’ gem to send myself email notificaitons if the search returns a positive hit for the product that I am searching for. In this case, it’s the iPhone 8. If you don’t care to integrate email notifications into your implementation of this, you can omit that part.</p>
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>gem <span class="nb">install </span>open-uri
+<span class="nb">sudo </span>gem <span class="nb">install </span>nokogiri
+<span class="nb">sudo </span>gem <span class="nb">install </span>gmail
+</code></pre></div></div>
+
+<h3>2. Basic Layout</h3>
+
+<p>Since I am going to throw this on a server and I want the file to be interpreted as a Ruby script, I will omit the <em>.rb</em> extension from my filename. I’ll want to store the URL that I want to go to as a variable. I will also store the product that I want to search for as a variable. Since we are going to be scraping surface level text on the website and not going into the sitemap, we can just use the product name as-is as our search term. In other words, I know <em>exactly</em> what I want to search for, and I know exactly how it will appear on the page.</p>
+
+<p>I am also going to fetch the contents of the page using Nokogiri and store them as a string in another variable.</p>
+
+<p>Lastly, I am going to set up my conditional block to process something if the text that I grabbed from the web page contains my search term.</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">#!/usr/bin/env ruby</span>
+
+<span class="nb">require</span> <span class="s1">'open-uri'</span>
+<span class="nb">require</span> <span class="s1">'nokogiri'</span>
+<span class="nb">require</span> <span class="s1">'gmail'</span>
+<span class="c1"># the URL for the page that shows refurbished iPhones</span>
+<span class="no">URL</span> <span class="o">=</span> <span class="s2">"https://www.apple.com/shop/browse/home/specialdeals/iphone"</span> 
+<span class="c1"># your search term variable</span>
+<span class="n">iphone_8</span> <span class="o">=</span> <span class="s2">"iPhone 8"</span>
+
+<span class="n">page</span> <span class="o">=</span> <span class="no">Nokogiri</span><span class="o">::</span><span class="no">HTML</span><span class="p">(</span><span class="nb">open</span> <span class="no">URL</span><span class="p">)</span>
+<span class="n">content</span> <span class="o">=</span> <span class="n">page</span><span class="p">.</span><span class="nf">to_s</span>
+
+<span class="k">if</span> <span class="n">content</span><span class="p">.</span><span class="nf">include?</span> <span class="n">iphone_8</span>
+ <span class="c1"># do something here</span>
+<span class="k">end</span>
+
+<span class="nb">exit</span> <span class="mi">0</span>
+</code></pre></div></div>
+
+<h3>3. Integrating Email Notifications</h3>
+
+<p>In the case that you don’t want to set up notifications, you can omit this next step completely and just use a <code class="language-plaintext highlighter-rouge">puts</code> or equivalent to print a message to the screen. That works just fine, but you don’t get notified in real time when the script returns the search result. If I know anything about Apple’s history of putting iPhones on the refurbished store, its that they sell like hotcakes! So I am also going to implement a notification system that integrates with my personal Gmail, letting me know when the product I’m searching becomes available.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">connect</code> method provided by the gmail gem allows me to make a connection to my Google Account and access my email. I can also specify my recipient(s) and email details such as the subject and body, if applicable. You can check out the gmail gem in more detail on <a href="https://github.com/gmailgem/gmail">it’s landing page on Github</a>. When I have constructed and <code class="language-plaintext highlighter-rouge">deliver</code>ed the email, I will also want to logout and close the connection to my Google Account, to prevent a dangling open connection.</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">...</span>
+<span class="o">...</span>
+<span class="k">if</span> <span class="n">content</span><span class="p">.</span><span class="nf">include?</span> <span class="n">iphone_8</span>
+  <span class="no">Gmail</span><span class="p">.</span><span class="nf">connect</span><span class="p">(</span><span class="s1">'me@gmail.com'</span><span class="p">,</span> <span class="s1">'yourpassword'</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">gmail</span><span class="o">|</span>
+    <span class="n">gmail</span><span class="p">.</span><span class="nf">deliver</span> <span class="k">do</span> 
+      <span class="n">to</span> <span class="s2">"also_me@gmail.com"</span>
+      <span class="n">subject</span> <span class="s2">"Product XYZ Is Now Available!"</span>
+      <span class="n">text_part</span> <span class="k">do</span> 
+        <span class="n">body</span> <span class="s2">"</span><span class="si">#{</span><span class="n">iphone_8</span><span class="si">}</span><span class="s2"> is now available in the Apple Refurbished store!</span><span class="se">\n</span><span class="s2"> Hurry on over to </span><span class="si">#{</span><span class="no">URL</span><span class="si">}</span><span class="s2"> to grab one now!"</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+    <span class="n">gmail</span><span class="p">.</span><span class="nf">logout</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>There are a couple of things to note here that I think are worth mentioning:</p>
+<ul>
+  <li>using your Gmail credentials in plain text is obviously <strong>NOT</strong> an ideal solution. If you’re going to put your code on some sort of publicly available repository, you’ll want to make sure that your credentials are hidden. For that, I suggest checking out the BCrypt gem and XOauth2 to create a more secure authentication method. In the interest of time, I have omitted this step.</li>
+  <li>you’ll want to make sure that you allow your Google Account to <a href="https://myaccount.google.com/lesssecureapps">Let Less Secure Apps access your account</a>. This is basically a security feature that Google has disabled by default for account security. To turn it on, please go to the above link to turn it on. The <code class="language-plaintext highlighter-rouge">gmail</code> gem won’t work unless you turn this on.</li>
+</ul>
+
+<h3>4. Automating The Process Using Cron</h3>
+
+<p>Like I said before, if you want to just manually run your script you should be able to do that at this point. But if you want to automate and schedule the task to run ever so often, we can use <code class="language-plaintext highlighter-rouge">CRON</code> to set that up. CRON is a UNIX utility that allows you to schedule tasks at a regular time interval. The task in this case is our script. This way, after a specified time the script will automatically run, parse the website and send me an email if the search term is found.</p>
+
+<p>For this, you can use a service like Heroku, AWS or DigitalOcean, but since I have a Raspberry Pi lying around, I will just use that as my server.</p>
+
+<p>Setting up CRON is pretty straight forward. The three commands that you’ll need to know are:</p>
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>crontab <span class="nt">-l</span> <span class="c">#lists all cronjobs</span>
+crontab <span class="nt">-e</span> <span class="c">#create a new cronjob</span>
+crontab <span class="nt">-r</span> <span class="c">#remove cronjob(s)</span>
+</code></pre></div></div>
+
+<p>When you launch a new cronjob using the <code class="language-plaintext highlighter-rouge">-e</code> flag, you’ll see a screen that gives you some basic information about how to set up a job. It should be pretty self explanatory, but to be clear, cronjobs are set up with this format:</p>
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># MM HH DD MO WK</span>
+<span class="k">*</span> <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> /path/to/task/to/run <span class="nt">-arguments</span> 
+</code></pre></div></div>
+<p>The <code class="language-plaintext highlighter-rouge">*</code> is a wildcard that in this case means ‘run the script every minute of every hour of every day of every month indefinitely’. You can use a web resource called <a href="https://crontab.guru">crontab guru</a> to double check the schedule that you want your task to follow.</p>
+
+<p>So let’s say I want to run my script every 4 hours indefinitely. That seems like a pretty decent time interval for scraping the page. For that, I would write:</p>
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0 <span class="k">*</span>/4 <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> /bin/bash <span class="nt">-l</span> <span class="nt">-c</span> <span class="s1">'~/path/to/filename'</span>
+</code></pre></div></div>
+<p>This means ‘run the file at the specified path from the bash environment at the 0th minute every 4 hours’. Pretty neat, right? Go ahead and test it out by searching for something that’s already there on the page you’re trying to scrape and see if the cronjob actually works. If it does, you’re all done!</p>
+
+<hr />
+
+<p>We can see that by using a few lines of code and by utilizing a couple of rubygems and CRON, we can set up a system that scrapes a particular web resource and notifies us when something that we’re interested on that resource becomes available. That seems like a very powerful implementation and a pretty big win to me! Now, when the iPhone becomes available on the refurb store, and depending on how frequently you set up your cronjob to execute, you can be pretty darn sure that you’ll be one of the first ones to be notified.</p>
+
+
+  </div>
+
+  
+
+</article>
+
+      </div>
+    </main>
+
+    <br>
+    
+    <br>
+<footer class="site-footer">
+
+  <div class="wrapper">
+
+    <p>
+      
+
+<!-- Subscribe via <a href="http://localhost:4000/feed.xml">RSS</a> -->
+<br>
+&copy; 2018-2023 Habib ur Rehman 
+<br>
+Jekyll theme by <a href="https://github.com/yous/whiteglass">yous</a>
+
+    </p>
+  
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

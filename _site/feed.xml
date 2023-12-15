@@ -1,0 +1,640 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+  <generator uri="http://jekyllrb.com" version="4.3.2">Jekyll</generator>
+  
+  
+  <link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" />
+  <link href="http://localhost:4000/" rel="alternate" type="text/html" hreflang="en" />
+  <updated>2023-12-15T01:45:29+00:00</updated>
+  <id>http://localhost:4000//</id>
+
+  
+    <title type="html">• • •</title>
+  
+
+  
+    <subtitle>A programming blog</subtitle>
+  
+
+  
+    <author>
+        <name>Habib ur Rehman</name>
+      
+      
+    </author>
+  
+
+  
+  
+    <entry>
+      
+      <title type="html">Deploying a Spring Boot API to AWS Elastic Beanstalk with GitHub Actions</title>
+      
+      
+      <link href="http://localhost:4000/2023/12/12/Deploying-a-Spring-Boot-API-to-AWS-Elastic-Beanstalk-with-GitHub-Actions/" rel="alternate" type="text/html" title="Deploying a Spring Boot API to AWS Elastic Beanstalk with GitHub Actions" />
+      
+      <published>2023-12-12T18:52:00+00:00</published>
+      <updated>2023-12-12T18:52:00+00:00</updated>
+      <id>http://localhost:4000/2023/12/12/Deploying-a-Spring-Boot-API-to-AWS-Elastic-Beanstalk-with-GitHub-Actions</id>
+      <content type="html" xml:base="http://localhost:4000/2023/12/12/Deploying-a-Spring-Boot-API-to-AWS-Elastic-Beanstalk-with-GitHub-Actions/">&lt;p&gt;Recently, my software engineering graduate degree culminated with the completion of a capstone project, where students organized into teams to build a real software product with practical value. I had the pleasure of working on a team of excellent engineers to design and develop a Yelp&lt;em&gt;-esque&lt;/em&gt; business reservation and management system. Given the time constraints of the semester, we scoped the project such that it was achievable within 3 months. We presented &lt;a href=&quot;http://restohub.s3-website.us-east-2.amazonaws.com/&quot;&gt;RestoHub&lt;/a&gt;, a restaurant-focused reservation management app. We took an experience-based approach with deciding our tech stack, where we picked frameworks and libraries that the team was already familiar and comfortable with – sticking with tried and tested tools. After all, we needed to deliver an MVP by the end of the semester.&lt;/p&gt;
+
+&lt;!-- more --&gt;
+
+&lt;p&gt;Having deployed a Rails application on EC2 for a previous employer, I was already familiar with AWS and the vastness of its services. However, that experience was a few years in the past, and AWS has since expanded its services and offerings considerably. At the time this post is published, there are &lt;a href=&quot;https://aws.amazon.com/products/?pg=WIAWS-N&amp;amp;tile=learn_more&amp;amp;aws-products-all.sort-by=item.additionalFields.productNameLowercase&amp;amp;aws-products-all.sort-order=asc&amp;amp;awsf.re%3AInvent=*all&amp;amp;awsf.Free%20Tier%20Type=*all&amp;amp;awsf.tech-category=*all&quot;&gt;over 300 AWS offerings&lt;/a&gt;, and it can be pretty intimidating to truly understand what service checks all the boxes for your needs.&lt;/p&gt;
+
+&lt;p&gt;Given that our backend featured a simple CRUD Spring Boot REST API, we decided to leverage Elastic Beanstalk as the API server because it seemed like a great fit for our use case. The official Spring documentation also &lt;a href=&quot;https://docs.spring.io/spring-boot/docs/current/reference/html/deployment.html#deployment.cloud.aws&quot;&gt;recommends the use of Elastic Beanstalk&lt;/a&gt; for deployment to AWS. In the preliminary stages after having set up the API on Elastic Beanstalk, I was manually deploying the jar files to the Beanstalk instance. Eventually though, we needed a way to automatically deploy our API directly to Elastic Beanstalk without the need for manual deployment. In other words, if there were any code changes and the build passed, the latest version of the RestoHub API should be available in the cloud. Of course, if the build failed, or if there were any test failures, the deployment should not occur in the cloud.&lt;/p&gt;
+
+&lt;p&gt;AWS offers CodePipeline as its CI/CD build platform, but since we were already leveraging GitHub Actions as our automation platform, we figured we’d just stick to it and find a way to make it work with our Elastic Beanstalk instance. This blog posts demonstrates how to deploy a Spring Boot API to Elastic Beanstalk with GitHub Actions.&lt;/p&gt;
+
+&lt;p&gt;To follow along with this blog post, the following prerequisites should already be in place in your setup:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;A Spring Boot project with its source code pushed to GitHub.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Familiarity with GitHub Actions, or some working knowledge of how CI/CD pipelines are created. If not, the &lt;a href=&quot;https://docs.github.com/en/actions&quot;&gt;official documentation from GitHub&lt;/a&gt; is a fantastic resource to get started with Actions.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;A Spring Boot API, or application that is functional locally. This tutorial uses Maven as a build tool, however the same patterns are applicable for Gradle.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;An AWS account with the following resources:&lt;/p&gt;
+    &lt;ul&gt;
+      &lt;li&gt;A functional Elastic Beanstalk environment and instance. If this has not already been done, I highly recommend &lt;a href=&quot;https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create_deploy_Java.html&quot;&gt;this article&lt;/a&gt; detailing how to get started with Spring Boot on Elastic Beanstalk.&lt;/li&gt;
+      &lt;li&gt;Access to AWS IAM. We will be leveraging an IAM role specifically crafted for use with GitHub Actions.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3&gt;1. Getting Your Java Build Tools Set Up&lt;/h3&gt;
+
+&lt;p&gt;As mentioned previously, this tutorial uses the &lt;em&gt;maven&lt;/em&gt; build tool. However if you’re using Gradle (or even Ant), the patterns should mostly be the same. You’d just need to change the build and test commands, if your application includes unit tests. By default, you can leverage the Spring &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;application.properties&lt;/code&gt; configuration file. This file might contain environment-specific secrets or credentials, verbosity settings of your application logs, if any, as well as other database settings as an example. Here’s an example of an &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;application.properties&lt;/code&gt; file that you might see for a Spring Boot maven project:&lt;/p&gt;
+
+&lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;spring.datasource.url&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;DB_CONNECTION
+spring.datasource.username&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;DB_USERNAME
+spring.datasource.password&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;DB_PASSWORD
+spring.datasource.driver-class-name&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;org.postgresql.Driver
+
+&lt;span class=&quot;c&quot;&gt;#configure hibernate with postgresql&lt;/span&gt;
+spring.jpa.properties.hibernate.dialect&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;update
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Your application properties may vary, but notice how the sensitive properties such as the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;datasource.url&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;datasource.username&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;datasource.password&lt;/code&gt; have placeholders instead of the actual values. &lt;strong&gt;This is a very crucial step, especally if you have sensitive credentials such as your database connections strings.&lt;/strong&gt; More on this in Section 4. However for now, just ensure that you’re not going to be committing any sensitive information to a public git repository.&lt;/p&gt;
+
+&lt;p&gt;Ensure you can build your Spring Boot project by executing the appropriate build command. For maven, the command can be something like: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;mvn -B package --file pom.xml -Dspring.config.location=./path/to/your/application.properties&lt;/code&gt;. If you’re using an IDE such as IntelliJ IDEA, the appropriate build tooling should be available in the context menus.&lt;/p&gt;
+
+&lt;h3&gt;2. Generating a GitHub Actions Workflow File&lt;/h3&gt;
+
+&lt;p&gt;Once you’ve configured your build tooling to run, push the latest changes to your GitHub repository. We will now create a new GitHub Actions workflow.&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;Navigate to the landing page of your GitHub repository&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Click on the “Actions” tab at the top menu bar. This will take you to the landing page of GitHub Actions&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;You may choose to click the “set up a workflow yourself” link, however GitHub is pretty good at understanding code context and will suggest appropriate workflows for your Spring project. For example, if you’re using Spring Boot with Maven, you should see a suggested workflow similar to “Java with Maven”. You can use their templates as a good starting point.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Once you follow through with the suggested workflow, you should notice a new directory called &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.github/workflows&lt;/code&gt; created under your repository root. It should contain a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;workflow.yml&lt;/code&gt; file. It should look something similar to the YAML code below. We will break down each section of the file.&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Spring Boot Test, Package, Deploy to AWS&lt;/span&gt;
+
+&lt;span class=&quot;na&quot;&gt;on&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;push&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;branches&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;main&quot;&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;]&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;pull_request&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;branches&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;main&quot;&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;]&lt;/span&gt;
+
+&lt;span class=&quot;na&quot;&gt;jobs&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;build&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;runs-on&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ubuntu-latest&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;steps&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/checkout@v3&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Set up JDK &lt;/span&gt;&lt;span class=&quot;m&quot;&gt;17&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/setup-java@v3&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;java-version&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;17'&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;distribution&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;corretto'&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;maven&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Build with Maven&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;run&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mvn -B package --file pom.xml -Dspring.config.location=./src/main/resources/application-prod.properties -P prod&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;name&lt;/code&gt; parameter tells GitHub Actions the name of your workflow for visibility to the end user.&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;on&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;push&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;branches&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;main&quot;&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;]&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;pull_request&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;branches&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;main&quot;&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The above block of code tells GitHub Actions when to start runing your workflow. This can be interpreted as “run this particular workflow every time there is a commit pushed to the main branch, or if there is a Pull Request merged into the main branch”.&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;jobs&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;build&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;runs-on&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ubuntu-latest&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;steps&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/checkout@v3&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Set up JDK &lt;/span&gt;&lt;span class=&quot;m&quot;&gt;17&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/setup-java@v3&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;java-version&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;17'&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;distribution&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;corretto'&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;maven&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Build with Maven&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;run&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mvn -B package --file pom.xml -Dspring.config.location=./src/main/resources/application-prod.properties -P prod&lt;/span&gt;
+&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This section instructs GitHub Actions’ machines on which jobs to run, what environments to run them in, as well as the names of the job. For example, the above code is specific to an Ubuntu instance. It sets up Java JDK 17 on that machine with the coretto distribution, and specifies a command to use maven to build the source code. Here is where you can specify your build tooling, as well as what specific paramters and commandd line arguments you would like to build your project with.&lt;/p&gt;
+
+&lt;p&gt;Once you create and commit your final workflow file, ensure that it works by monitoring the build status of GitHub Actions. You should see a tiny status indication on the main branch in your repository. If the build succeeds, you should see a green check mark. If it fails, you’ll see a red cross. Below is an image for reference.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/20231212/buildpassing.png&quot; alt=&quot;GitHub Actions Build Passing&quot; title=&quot;GitHub Actions Build Passing&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Please ensure that your build passes before moving on to the next step, taking all necessary steps to troubleshoot any failures. &lt;strong&gt;One troubleshooting tip is that YAML code is whitespace sensitive.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h3&gt;3. Creating an IAM user for GitHub Actions&lt;/h3&gt;
+
+&lt;p&gt;Now that you’ve set up a GitHub Actions workflow, we will create a connection between the Actions workflow and AWS via an IAM user. Head on over to your AWS home page. If you’ve used IAM in the past, you can navigate to it directly from AWS. If this is your first time using IAM, use the search bar at the top of the AWS home page to search for “IAM” and navigate to its dashboard.&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;From the context menu on the left, navigate to “Users”&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Click on “Create User”, and create a new user with a name like “github-actions”&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;On the next page, click on the “Attach policies directly” box. This will allow you to define what security and access policies this particular IAM role should have. Then, in the search box below, search for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AmazonS3FullAccess&lt;/code&gt; as well as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AdministratorAccess-AWSElasticBeanstalk&lt;/code&gt;. Make sure to check each of these policies for your user.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Review and create your new user&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Finally, once the IAM user has been created successfully, make sure to save the generated &lt;strong&gt;Access Key ID&lt;/strong&gt; and &lt;strong&gt;Secret Access Key&lt;/strong&gt;. Additionally, if there is an option to download a CSV of the credentials, do that as well because you will not be able to access these secrets again! We will be adding these secrets to the GitHub repository to include in our workflow file.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/20231212/iam-1.png&quot; alt=&quot;Creating an IAM User&quot; title=&quot;Creating an IAM User&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/20231212/iam-2.png&quot; alt=&quot;Defining IAM user policies&quot; title=&quot;Defining IAM user policies&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/20231212/iam-3.png&quot; alt=&quot;Review and Create IAM User&quot; title=&quot;Review and Create IAM User&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Note:&lt;/strong&gt; if you run into issues with your IAM user after attaching the S3 and Elastic Beanstalk policies, consider granting &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AdministratorAccess&lt;/code&gt; to your IAM user. While this could expose security vulnerabilities with your pipeline, it can be a useful troubleshooting step if you run into errors or issues in the deployment steps further down.&lt;/p&gt;
+
+&lt;h3&gt;4. Adding Application Secrets and Sensitive Environment Variables to GitHub&lt;/h3&gt;
+
+&lt;p&gt;Now that we have our AWS IAM user set up, we will add the IAM access key and access key secret to the GitHub repository:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;Navigate to the repository landing page and click on the “Settings” tab&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Under the “Security” option in the sidebar, select “Secrets and Variables”, then “Codespaces”&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Click on “New repository secret”&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Enter the Names and Values of the secrets. Make sure to create meaningful names for the secrets, something like &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IAM_ACCESS_KEY&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IAM_ACCESS_KEY_SECRET&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;If you have other sensitive application secrets, such as the Spring datasource strings, database connections strings or API keys, this is a good time to enter those as well.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Add and save the secrets.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;This will allow you to access the secrets from the workflow file, while abstracting the values of the secrets from the public eye. For more information about repository secrets, check out &lt;a href=&quot;https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions&quot;&gt;the official documentation from GitHub&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3&gt;5. Modifying the Workflow File&lt;/h3&gt;
+
+&lt;p&gt;Now that we have our AWS IAM user set up, as well our secrets saved, we will make some modifications to our workflow file to enable automatically deploying our code changes to our Elastic Beanstalk instance. Again, please make sure that you have your Elastic Beanstalk instance set up and ready to go. You should have the access to the following Elastic Beanstalk information:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;application name&lt;/strong&gt; of your Beanstalk Spring Boot application&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;environment name&lt;/strong&gt; of your Beanstalk instance&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;region name&lt;/strong&gt; of your instance. This is just the availability zone of your app.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;We will be using the Action &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;einaregilsson/beanstalk-deploy@v21&lt;/code&gt; to trigger the Beanstalk deployment. &lt;strong&gt;The full, updated workflow file is shown below.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Spring Boot Test, Package, Deploy to AWS&lt;/span&gt;
+
+&lt;span class=&quot;na&quot;&gt;on&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;push&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;branches&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;main&quot;&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;]&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;pull_request&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;branches&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;main&quot;&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;]&lt;/span&gt;
+
+&lt;span class=&quot;na&quot;&gt;jobs&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;build&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;runs-on&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ubuntu-latest&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;steps&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/checkout@v3&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Set up JDK &lt;/span&gt;&lt;span class=&quot;m&quot;&gt;17&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/setup-java@v3&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;java-version&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;17'&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;distribution&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;corretto'&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;maven&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Build with Maven&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;run&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mvn -B package --file pom.xml -Dspring.config.location=./src/main/resources/application-prod.properties -P prod&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Upload RestoHub JAR&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;# this will upload the build .jar file and make it available for the deployment step&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/upload-artifact@v3&lt;/span&gt;          
+        &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;artifact&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;./target/Restohub-0.0.1-SNAPSHOT.jar&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# you'll need to change the name of your own jar file here&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;deploy&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;needs&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;build&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Deploy to AWS EBS&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;runs-on&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ubuntu-latest&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;steps&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Download RestoHub JAR&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# download the jar that was uploaded in the previous steps&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/download-artifact@v2.1.1&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;artifact&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Deploy to ElasticBeanstalk&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;einaregilsson/beanstalk-deploy@v21&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;aws_access_key&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# pull the IAM_ACCESS_KEY from the saved repo secrets&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;aws_secret_key&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# pull the IAM_ACCESS_KEY_SECRET from the saved repo secrets&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;application_name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;restohub-api&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# change this to your own application name from Elastic Beanstalk&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;environment_name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Restohub-api-environment&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# change this to your own environment name from Elastic Beanstalk&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;version_label&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# unique version number of your app, we are using the GitHub commit SHA as an identifier&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;region&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;us-east-2&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# change this to your Elastic Beanstalk region!&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;deployment_package&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Restohub-0.0.1-SNAPSHOT.jar&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# name of your generated jar file&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Let’s review the changes to our workflow file.&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Upload RestoHub JAR&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;# this will upload the build .jar file and make it available for the deployment step&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/upload-artifact@v3&lt;/span&gt;          
+        &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;artifact&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;./target/Restohub-0.0.1-SNAPSHOT.jar&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# you'll need to change the name of your own jar file here&lt;/span&gt;
+&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This snippet uses the “upload-artifact” Action to upload the generated JAR file to GitHub’s storage temporarily. This will allow the subsequent steps to reference this uploaded artifact for deployment to AWS.&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;deploy&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;needs&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;build&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Deploy to AWS EBS&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;runs-on&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ubuntu-latest&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;steps&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Download RestoHub JAR&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# download the jar that was uploaded in the previous steps&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/download-artifact@v2.1.1&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;artifact&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Deploy to ElasticBeanstalk&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;einaregilsson/beanstalk-deploy@v21&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;aws_access_key&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# pull the IAM_ACCESS_KEY from the saved repo secrets&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;aws_secret_key&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# pull the IAM_ACCESS_KEY_SECRET from the saved repo secrets&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;application_name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;restohub-api&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# change this to your own application name from Elastic Beanstalk&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;environment_name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Restohub-api-environment&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# change this to your own environment name from Elastic Beanstalk&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;version_label&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# unique version number of your app, we are using the GitHub commit SHA as an identifier&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;region&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;us-east-2&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# change this to your Elastic Beanstalk region!&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;deployment_package&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Restohub-0.0.1-SNAPSHOT.jar&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# name of your generated jar file&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;In this new &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;deploy&lt;/code&gt; step of the workflow, we are performing the following actions:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;Download the artifact previously uploaded using the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;download-artifact&lt;/code&gt; action&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Deploy to Elastic Beanstalk using the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;beanstalk-deploy&lt;/code&gt; action. Make sure to reference YOUR application specific properties here, such as the secrets, application and environment names, as well as the region and JAR file.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;This should be all that’s needed to get your workflow file setup for deployment to Elastic Beanstalk.&lt;/p&gt;
+
+&lt;h3&gt;6. Testing the Deployment to Elastic Beanstalk&lt;/h3&gt;
+
+&lt;p&gt;Go ahead and commit these changes, ensuring again that the YAML formatting is correct. GitHub should kick off a new build from the main branch of your repository. You can monitor the build by clicking on the “Actions” tab on your repository, then navigating to the Workflow that you defined. You should be able to see a build log, indicating what steps are being completed in real time, and where the errors were, if any. If everything went smoothly, your app should be deployed to your Elastic Beanstalk instance successfully! You can verify this by heading over to your Beanstalk landing page and viewing the updated status of your app, such as when it was last updated and the version name. If the status is Green, you have been successful!&lt;/p&gt;
+
+&lt;h3&gt;7. (Optional) Creating Environment-Specific Workflows&lt;/h3&gt;
+
+&lt;p&gt;If your build step contains unit tests, or if you have separate environments like a development environment, an integration environment and a dedicated production environment, you might want to consider creating specific workflows for each of these environments. Additionally, if you have feature branches and have a main/master branch that contains all changes that make it to a specific environment, you might also want to consider creating some specific workflows for your branches. In our case, we are only ever deploying to Elastic Beanstalk from the main branch. However we are building and running our test suite on all other branches that there are code changes to.&lt;/p&gt;
+
+&lt;p&gt;Below is the full &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;production.yml&lt;/code&gt; workflow that we used for our production AWS Elastic Beanstalk instance:&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Spring Boot Test, Package, Deploy to AWS&lt;/span&gt;
+
+&lt;span class=&quot;na&quot;&gt;on&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;push&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;branches&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;main&quot;&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;]&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;pull_request&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;branches&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;main&quot;&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;]&lt;/span&gt;
+
+&lt;span class=&quot;na&quot;&gt;jobs&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;build&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;runs-on&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ubuntu-latest&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;steps&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/checkout@v3&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Set up JDK &lt;/span&gt;&lt;span class=&quot;m&quot;&gt;17&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/setup-java@v3&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;java-version&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;17'&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;distribution&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;corretto'&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;maven&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Write DB Connection&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;env&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;DB_CONNECTION&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;DB_USERNAME&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;DB_PASSWORD&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;run&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;|&lt;/span&gt;
+          &lt;span class=&quot;s&quot;&gt;import os&lt;/span&gt;
+          &lt;span class=&quot;s&quot;&gt;with open('./src/main/resources/application-prod.properties', 'r') as file:&lt;/span&gt;
+            &lt;span class=&quot;s&quot;&gt;filedata = file.read()&lt;/span&gt;
+          &lt;span class=&quot;s&quot;&gt;filedata = filedata.replace('DB_CONNECTION', os.getenv('DB_CONNECTION'))&lt;/span&gt;
+          &lt;span class=&quot;s&quot;&gt;filedata = filedata.replace('DB_USERNAME', os.getenv('DB_USERNAME'))&lt;/span&gt;
+          &lt;span class=&quot;s&quot;&gt;filedata = filedata.replace('DB_PASSWORD', os.getenv('DB_PASSWORD'))&lt;/span&gt;
+          &lt;span class=&quot;s&quot;&gt;with open('./src/main/resources/application-prod.properties', 'w') as file:&lt;/span&gt;
+            &lt;span class=&quot;s&quot;&gt;file.write(filedata)&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;shell&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;python&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Build with Maven&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;run&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mvn -B package --file pom.xml -DskipTests -Dspring.config.location=./src/main/resources/application-prod.properties -P prod&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Upload RestoHub JAR&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/upload-artifact@v3&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;artifact&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;./target/Restohub-0.0.1-SNAPSHOT.jar&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;deploy&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;needs&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;build&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Deploy to AWS EBS&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;runs-on&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ubuntu-latest&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;steps&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Download RestoHub JAR&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/download-artifact@v2.1.1&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;artifact&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Deploy to ElasticBeanstalk&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;einaregilsson/beanstalk-deploy@v21&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;aws_access_key&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;aws_secret_key&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;application_name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;restohub-api&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;environment_name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Restohub-api-environment&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;version_label&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;region&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;us-east-2&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;deployment_package&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Restohub-0.0.1-SNAPSHOT.jar&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Remember when we said we’d come back to dealing with Spring application secrets and oter application-sensitive information? Well, this is how those become useful! Here we are saving all sensitive secrets and properties to the GitHub repository secrets. In the “Write DB Connection” step above, we are referencing our saved secrets to inject into the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;application.properties&lt;/code&gt; file here using some python scripting. We leverage GitHub Actions to dynamically fetch the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DB_CONNECTION&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DB_USERNAME&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DB_PASSWORD&lt;/code&gt; strings, and replace them in our properties file. Also notice how we are skipping tests with the maven &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-DskipTests&lt;/code&gt; flag for our production workflow. All changes are already tested when pushed to other branches.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;CI/CD enables a great level of automation for building, testing and deploying software, and GitHub Actions makes getting your feet wet with CI/CD very simple. With a wide range of user-created automations already publicly available, GitHub Actions allows users to greatly customize their own workflows. In this tutorial, we leveraged the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;einaregilsson/beanstalk-deploy@v21&lt;/code&gt; workflow, as well as GitHub-provided automations such as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;actions/download-artifact@v2.1.1&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;actions/upload-artifact@v3&lt;/code&gt;. We combined the use of GitHub and open-source to push a Spring Boot REST API to the public cloud on AWS. This reduces the manual overhead of having to manually copy over and deploy changes to our AWS Elastic Beanstalk instance, greatly increasing developer productivity by redirecting their focus on crafting robust and scalable APIs.&lt;/p&gt;</content>
+
+      
+      
+      
+      
+      
+
+      
+        <author>
+            <name>Habib ur Rehman</name>
+          
+          
+        </author>
+      
+
+      
+        <category term="Cloud" />
+      
+
+      
+        <category term="AWS" />
+      
+        <category term="automation" />
+      
+        <category term="CI/CD" />
+      
+        <category term="GitHub Actions" />
+      
+        <category term="Java" />
+      
+        <category term="Spring Boot" />
+      
+
+      
+        <summary type="html">Recently, my software engineering graduate degree culminated with the completion of a capstone project, where students organized into teams to build a real software product with practical value. I had the pleasure of working on a team of excellent engineers to design and develop a Yelp-esque business reservation and management system. Given the time constraints of the semester, we scoped the project such that it was achievable within 3 months. We presented RestoHub, a restaurant-focused reservation management app. We took an experience-based approach with deciding our tech stack, where we picked frameworks and libraries that the team was already familiar and comfortable with – sticking with tried and tested tools. After all, we needed to deliver an MVP by the end of the semester.</summary>
+      
+
+      
+      
+    </entry>
+  
+  
+  
+    <entry>
+      
+      <title type="html">Scraping Apple’s Refurb Store with Ruby</title>
+      
+      
+      <link href="http://localhost:4000/2018/09/20/scraping-apples-refurb-store-with-ruby/" rel="alternate" type="text/html" title="Scraping Apple's Refurb Store with Ruby" />
+      
+      <published>2018-09-20T14:00:00+00:00</published>
+      <updated>2018-09-20T14:00:00+00:00</updated>
+      <id>http://localhost:4000/2018/09/20/scraping-apples-refurb-store-with-ruby</id>
+      <content type="html" xml:base="http://localhost:4000/2018/09/20/scraping-apples-refurb-store-with-ruby/">&lt;p&gt;Last week Apple announced their new lineup of iPhones, just like they do every year. This time though, it seems like they’re pushing to make $1000+ smartphones the norm. They’ve also completely removed fingerprint authentication from their phones in favor of Face ID, which they claim is more secure. If you’re like me and you don’t want to spend an absurd amount of money on a phone, and want fingerprint authentication, chances are that you’re better off purchasing an older, marked-down iPhone model.&lt;/p&gt;
+
+&lt;p&gt;If you want to save even more money (like myself) and still want a premium Apple warranty, you buy refurbished! The nice thing about refurbished Apple products is that they are in essence, products that were originally in great condition – either returned by unhappy customers or pulled from Apple’s display units in stores. The refurbishment process includes swapping the old battery for a new one, wiping the phone clean and replacing parts that had cosmetic damage. So what you end up getting is basically a brand new device for cheap. The thing about these refurbished devices though, is that people seem to jump on them very quickly, so they sell out just as fast. What we are going to do is devise a system that will notify us when the iPhone 8 is available for purchase on Apple’s Refurbished Store. Let’s get started!&lt;/p&gt;
+
+&lt;!-- more --&gt;
+
+&lt;p&gt;I’m going to be using Ruby to scrape the Apple Store site, simply because the use of gems and the syntax makes it very easy to perform this action in a minimal amount of code. The gems that I am going to be using are ‘open-uri’ to access files on the web, ‘nokogiri’ to collect information from HTML pages and ‘gmail’ to create a notification system.&lt;/p&gt;
+
+&lt;h3&gt;1. Set up&lt;/h3&gt;
+
+&lt;p&gt;First, install all the gems that you’ll need for this to work. I am using the ‘gmail’ gem to send myself email notificaitons if the search returns a positive hit for the product that I am searching for. In this case, it’s the iPhone 8. If you don’t care to integrate email notifications into your implementation of this, you can omit that part.&lt;/p&gt;
+&lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;gem &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;open-uri
+&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;gem &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;nokogiri
+&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;gem &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;gmail
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3&gt;2. Basic Layout&lt;/h3&gt;
+
+&lt;p&gt;Since I am going to throw this on a server and I want the file to be interpreted as a Ruby script, I will omit the &lt;em&gt;.rb&lt;/em&gt; extension from my filename. I’ll want to store the URL that I want to go to as a variable. I will also store the product that I want to search for as a variable. Since we are going to be scraping surface level text on the website and not going into the sitemap, we can just use the product name as-is as our search term. In other words, I know &lt;em&gt;exactly&lt;/em&gt; what I want to search for, and I know exactly how it will appear on the page.&lt;/p&gt;
+
+&lt;p&gt;I am also going to fetch the contents of the page using Nokogiri and store them as a string in another variable.&lt;/p&gt;
+
+&lt;p&gt;Lastly, I am going to set up my conditional block to process something if the text that I grabbed from the web page contains my search term.&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;#!/usr/bin/env ruby&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'open-uri'&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'nokogiri'&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'gmail'&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;# the URL for the page that shows refurbished iPhones&lt;/span&gt;
+&lt;span class=&quot;no&quot;&gt;URL&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;https://www.apple.com/shop/browse/home/specialdeals/iphone&quot;&lt;/span&gt; 
+&lt;span class=&quot;c1&quot;&gt;# your search term variable&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;iphone_8&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;iPhone 8&quot;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;page&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Nokogiri&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;HTML&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;URL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;content&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;page&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;to_s&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;include?&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iphone_8&lt;/span&gt;
+ &lt;span class=&quot;c1&quot;&gt;# do something here&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;exit&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3&gt;3. Integrating Email Notifications&lt;/h3&gt;
+
+&lt;p&gt;In the case that you don’t want to set up notifications, you can omit this next step completely and just use a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;puts&lt;/code&gt; or equivalent to print a message to the screen. That works just fine, but you don’t get notified in real time when the script returns the search result. If I know anything about Apple’s history of putting iPhones on the refurbished store, its that they sell like hotcakes! So I am also going to implement a notification system that integrates with my personal Gmail, letting me know when the product I’m searching becomes available.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;connect&lt;/code&gt; method provided by the gmail gem allows me to make a connection to my Google Account and access my email. I can also specify my recipient(s) and email details such as the subject and body, if applicable. You can check out the gmail gem in more detail on &lt;a href=&quot;https://github.com/gmailgem/gmail&quot;&gt;it’s landing page on Github&lt;/a&gt;. When I have constructed and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;deliver&lt;/code&gt;ed the email, I will also want to logout and close the connection to my Google Account, to prevent a dangling open connection.&lt;/p&gt;
+
+&lt;div class=&quot;language-ruby highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;include?&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;iphone_8&lt;/span&gt;
+  &lt;span class=&quot;no&quot;&gt;Gmail&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;connect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'me@gmail.com'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'yourpassword'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gmail&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;gmail&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;deliver&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; 
+      &lt;span class=&quot;n&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;also_me@gmail.com&quot;&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;subject&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Product XYZ Is Now Available!&quot;&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;text_part&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; 
+        &lt;span class=&quot;n&quot;&gt;body&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iphone_8&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt; is now available in the Apple Refurbished store!&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt; Hurry on over to &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;URL&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt; to grab one now!&quot;&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;gmail&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;logout&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;There are a couple of things to note here that I think are worth mentioning:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;using your Gmail credentials in plain text is obviously &lt;strong&gt;NOT&lt;/strong&gt; an ideal solution. If you’re going to put your code on some sort of publicly available repository, you’ll want to make sure that your credentials are hidden. For that, I suggest checking out the BCrypt gem and XOauth2 to create a more secure authentication method. In the interest of time, I have omitted this step.&lt;/li&gt;
+  &lt;li&gt;you’ll want to make sure that you allow your Google Account to &lt;a href=&quot;https://myaccount.google.com/lesssecureapps&quot;&gt;Let Less Secure Apps access your account&lt;/a&gt;. This is basically a security feature that Google has disabled by default for account security. To turn it on, please go to the above link to turn it on. The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gmail&lt;/code&gt; gem won’t work unless you turn this on.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3&gt;4. Automating The Process Using Cron&lt;/h3&gt;
+
+&lt;p&gt;Like I said before, if you want to just manually run your script you should be able to do that at this point. But if you want to automate and schedule the task to run ever so often, we can use &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;CRON&lt;/code&gt; to set that up. CRON is a UNIX utility that allows you to schedule tasks at a regular time interval. The task in this case is our script. This way, after a specified time the script will automatically run, parse the website and send me an email if the search term is found.&lt;/p&gt;
+
+&lt;p&gt;For this, you can use a service like Heroku, AWS or DigitalOcean, but since I have a Raspberry Pi lying around, I will just use that as my server.&lt;/p&gt;
+
+&lt;p&gt;Setting up CRON is pretty straight forward. The three commands that you’ll need to know are:&lt;/p&gt;
+&lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;crontab &lt;span class=&quot;nt&quot;&gt;-l&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#lists all cronjobs&lt;/span&gt;
+crontab &lt;span class=&quot;nt&quot;&gt;-e&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#create a new cronjob&lt;/span&gt;
+crontab &lt;span class=&quot;nt&quot;&gt;-r&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#remove cronjob(s)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;When you launch a new cronjob using the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-e&lt;/code&gt; flag, you’ll see a screen that gives you some basic information about how to set up a job. It should be pretty self explanatory, but to be clear, cronjobs are set up with this format:&lt;/p&gt;
+&lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# MM HH DD MO WK&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;*&lt;/span&gt; /path/to/task/to/run &lt;span class=&quot;nt&quot;&gt;-arguments&lt;/span&gt; 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;*&lt;/code&gt; is a wildcard that in this case means ‘run the script every minute of every hour of every day of every month indefinitely’. You can use a web resource called &lt;a href=&quot;https://crontab.guru&quot;&gt;crontab guru&lt;/a&gt; to double check the schedule that you want your task to follow.&lt;/p&gt;
+
+&lt;p&gt;So let’s say I want to run my script every 4 hours indefinitely. That seems like a pretty decent time interval for scraping the page. For that, I would write:&lt;/p&gt;
+&lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;0 &lt;span class=&quot;k&quot;&gt;*&lt;/span&gt;/4 &lt;span class=&quot;k&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;*&lt;/span&gt; /bin/bash &lt;span class=&quot;nt&quot;&gt;-l&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-c&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'~/path/to/filename'&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;This means ‘run the file at the specified path from the bash environment at the 0th minute every 4 hours’. Pretty neat, right? Go ahead and test it out by searching for something that’s already there on the page you’re trying to scrape and see if the cronjob actually works. If it does, you’re all done!&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;We can see that by using a few lines of code and by utilizing a couple of rubygems and CRON, we can set up a system that scrapes a particular web resource and notifies us when something that we’re interested on that resource becomes available. That seems like a very powerful implementation and a pretty big win to me! Now, when the iPhone becomes available on the refurb store, and depending on how frequently you set up your cronjob to execute, you can be pretty darn sure that you’ll be one of the first ones to be notified.&lt;/p&gt;</content>
+
+      
+      
+      
+      
+      
+
+      
+        <author>
+            <name>Habib ur Rehman</name>
+          
+          
+        </author>
+      
+
+      
+        <category term="programming" />
+      
+
+      
+        <category term="ruby" />
+      
+        <category term="automation" />
+      
+        <category term="cronjob" />
+      
+
+      
+        <summary type="html">Last week Apple announced their new lineup of iPhones, just like they do every year. This time though, it seems like they’re pushing to make $1000+ smartphones the norm. They’ve also completely removed fingerprint authentication from their phones in favor of Face ID, which they claim is more secure. If you’re like me and you don’t want to spend an absurd amount of money on a phone, and want fingerprint authentication, chances are that you’re better off purchasing an older, marked-down iPhone model. If you want to save even more money (like myself) and still want a premium Apple warranty, you buy refurbished! The nice thing about refurbished Apple products is that they are in essence, products that were originally in great condition – either returned by unhappy customers or pulled from Apple’s display units in stores. The refurbishment process includes swapping the old battery for a new one, wiping the phone clean and replacing parts that had cosmetic damage. So what you end up getting is basically a brand new device for cheap. The thing about these refurbished devices though, is that people seem to jump on them very quickly, so they sell out just as fast. What we are going to do is devise a system that will notify us when the iPhone 8 is available for purchase on Apple’s Refurbished Store. Let’s get started!</summary>
+      
+
+      
+      
+    </entry>
+  
+  
+  
+    <entry>
+      
+      <title type="html">Prelude</title>
+      
+      
+      <link href="http://localhost:4000/2018/08/14/prelude/" rel="alternate" type="text/html" title="Prelude" />
+      
+      <published>2018-08-14T14:00:00+00:00</published>
+      <updated>2018-08-14T14:00:00+00:00</updated>
+      <id>http://localhost:4000/2018/08/14/prelude</id>
+      <content type="html" xml:base="http://localhost:4000/2018/08/14/prelude/">&lt;p&gt;&lt;strong&gt;Updated: 10/17/2023&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Welcome! I used to have more words in this prelude post, but that post was too stale (and too cringe!). This is a programming blog, but I will try to treat it like a programming “diary”. Yes, I know GitHub and Gists already exist for exactly that purpose. But I like Jekyll, and I like Ruby and this platform just gives me more of an excuse to use these tools. It will also (hopefully) force me to be intentional about what I think is important, and what I think might be valuable information for other people to have. Posts shall try to be as short and sweet as possible, while still being thorough.&lt;/p&gt;</content>
+
+      
+      
+      
+      
+      
+
+      
+        <author>
+            <name>Habib ur Rehman</name>
+          
+          
+        </author>
+      
+
+      
+        <category term="misc" />
+      
+
+      
+        <category term="meta" />
+      
+        <category term="introduction" />
+      
+
+      
+        <summary type="html">Updated: 10/17/2023 Welcome! I used to have more words in this prelude post, but that post was too stale (and too cringe!). This is a programming blog, but I will try to treat it like a programming “diary”. Yes, I know GitHub and Gists already exist for exactly that purpose. But I like Jekyll, and I like Ruby and this platform just gives me more of an excuse to use these tools. It will also (hopefully) force me to be intentional about what I think is important, and what I think might be valuable information for other people to have. Posts shall try to be as short and sweet as possible, while still being thorough.</summary>
+      
+
+      
+      
+    </entry>
+  
+  
+</feed>

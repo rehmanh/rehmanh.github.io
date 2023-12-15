@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  
+  
+  
+    <title>• • • | Deploying a Spring Boot API to AWS Elastic Beanstalk with GitHub Actions</title>
+  
+  <meta name="description" content="Recently, my software engineering graduate degree culminated with the completion of a capstone project, where students organized into teams to build a real software product with practical value. I had the pleasure of working on a team of excellent engineers to design and develop a Yelp-esque business reservation and management system. Given the time constraints of the semester, we scoped the project such that it was achievable within 3 months. We presented RestoHub, a restaurant-focused reservation management app. We took an experience-based approach with deciding our tech stack, where we picked frameworks and libraries that the team was already familiar and comfortable with – sticking with tried and tested tools. After all, we needed to deliver an MVP by the end of the semester.">
+  
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/2023/12/12/Deploying-a-Spring-Boot-API-to-AWS-Elastic-Beanstalk-with-GitHub-Actions/">
+  
+  
+  <link rel="alternate" type="application/rss+xml" title="• • •" href="http://localhost:4000/feed.xml">
+
+  <link rel="apple-touch-icon" sizes="57x57" href="/favicons/apple-icon-57x57.png">
+<link rel="apple-touch-icon" sizes="60x60" href="/favicons/apple-icon-60x60.png">
+<link rel="apple-touch-icon" sizes="72x72" href="/favicons/apple-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="76x76" href="/favicons/apple-icon-76x76.png">
+<link rel="apple-touch-icon" sizes="114x114" href="/favicons/apple-icon-114x114.png">
+<link rel="apple-touch-icon" sizes="120x120" href="/favicons/apple-icon-120x120.png">
+<link rel="apple-touch-icon" sizes="144x144" href="/favicons/apple-icon-144x144.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/favicons/apple-icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-icon-180x180.png">
+<link rel="icon" type="image/png" sizes="192x192"  href="/favicons/android-icon-192x192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicons/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png">
+<link rel="manifest" href="/favicons/manifest.json">
+<meta name="msapplication-TileColor" content="#ffffff">
+<meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+<meta name="theme-color" content="#ffffff">
+
+
+  
+  <meta name="twitter:card" content="summary">
+  
+  <meta name="twitter:title" content="Deploying a Spring Boot API to AWS Elastic Beanstalk with GitHub Ac...">
+  <meta name="twitter:description" content="Recently, my software engineering graduate degree culminated with the completion of a capstone project, where students organized into teams to build a real software product with practical value. I ...">
+  
+  
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css?family=Montserrat:400,400i,700" rel="stylesheet">
+
+  
+
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" style="font-size: 42px; font-weight: 400; color: black;" href="/">
+      <div style="margin-left: 3px;" class="logo"></div><div class="logo"></div><div class="logo"></div>
+    </a>
+
+    <nav class="site-nav">
+      
+        
+        <a class="page-link internal-link" href="/about/">About</a>
+      
+        
+        <a class="page-link internal-link" href="/archives/">Archives</a>
+      
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    
+      <h1 class="post-title" itemprop="name headline">Deploying a Spring Boot API to AWS Elastic Beanstalk with GitHub Actions</h1>
+    
+    <p class="post-meta"><time datetime="2023-12-12T18:52:00+00:00" itemprop="datePublished">Dec 12, 2023</time> •
+  
+    
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+        <a href="/categories/cloud/">Cloud</a>
+      
+    
+  
+
+
+ •
+  
+    
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+        <a href="/tags/aws/">AWS</a>,
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  
+    
+    
+      
+    
+      
+    
+      
+    
+      
+        <a href="/tags/automation/">automation</a>,
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  
+    
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+        <a href="/tags/ci-cd/">CI/CD</a>,
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  
+    
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+        <a href="/tags/github-actions/">GitHub Actions</a>,
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  
+    
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+        <a href="/tags/java/">Java</a>,
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  
+    
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+        <a href="/tags/spring-boot/">Spring Boot</a>
+      
+    
+      
+    
+      
+    
+      
+    
+  
+</p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>Recently, my software engineering graduate degree culminated with the completion of a capstone project, where students organized into teams to build a real software product with practical value. I had the pleasure of working on a team of excellent engineers to design and develop a Yelp<em>-esque</em> business reservation and management system. Given the time constraints of the semester, we scoped the project such that it was achievable within 3 months. We presented <a href="http://restohub.s3-website.us-east-2.amazonaws.com/">RestoHub</a>, a restaurant-focused reservation management app. We took an experience-based approach with deciding our tech stack, where we picked frameworks and libraries that the team was already familiar and comfortable with – sticking with tried and tested tools. After all, we needed to deliver an MVP by the end of the semester.</p>
+
+<!-- more -->
+
+<p>Having deployed a Rails application on EC2 for a previous employer, I was already familiar with AWS and the vastness of its services. However, that experience was a few years in the past, and AWS has since expanded its services and offerings considerably. At the time this post is published, there are <a href="https://aws.amazon.com/products/?pg=WIAWS-N&amp;tile=learn_more&amp;aws-products-all.sort-by=item.additionalFields.productNameLowercase&amp;aws-products-all.sort-order=asc&amp;awsf.re%3AInvent=*all&amp;awsf.Free%20Tier%20Type=*all&amp;awsf.tech-category=*all">over 300 AWS offerings</a>, and it can be pretty intimidating to truly understand what service checks all the boxes for your needs.</p>
+
+<p>Given that our backend featured a simple CRUD Spring Boot REST API, we decided to leverage Elastic Beanstalk as the API server because it seemed like a great fit for our use case. The official Spring documentation also <a href="https://docs.spring.io/spring-boot/docs/current/reference/html/deployment.html#deployment.cloud.aws">recommends the use of Elastic Beanstalk</a> for deployment to AWS. In the preliminary stages after having set up the API on Elastic Beanstalk, I was manually deploying the jar files to the Beanstalk instance. Eventually though, we needed a way to automatically deploy our API directly to Elastic Beanstalk without the need for manual deployment. In other words, if there were any code changes and the build passed, the latest version of the RestoHub API should be available in the cloud. Of course, if the build failed, or if there were any test failures, the deployment should not occur in the cloud.</p>
+
+<p>AWS offers CodePipeline as its CI/CD build platform, but since we were already leveraging GitHub Actions as our automation platform, we figured we’d just stick to it and find a way to make it work with our Elastic Beanstalk instance. This blog posts demonstrates how to deploy a Spring Boot API to Elastic Beanstalk with GitHub Actions.</p>
+
+<p>To follow along with this blog post, the following prerequisites should already be in place in your setup:</p>
+<ul>
+  <li>
+    <p>A Spring Boot project with its source code pushed to GitHub.</p>
+  </li>
+  <li>
+    <p>Familiarity with GitHub Actions, or some working knowledge of how CI/CD pipelines are created. If not, the <a href="https://docs.github.com/en/actions">official documentation from GitHub</a> is a fantastic resource to get started with Actions.</p>
+  </li>
+  <li>
+    <p>A Spring Boot API, or application that is functional locally. This tutorial uses Maven as a build tool, however the same patterns are applicable for Gradle.</p>
+  </li>
+  <li>
+    <p>An AWS account with the following resources:</p>
+    <ul>
+      <li>A functional Elastic Beanstalk environment and instance. If this has not already been done, I highly recommend <a href="https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create_deploy_Java.html">this article</a> detailing how to get started with Spring Boot on Elastic Beanstalk.</li>
+      <li>Access to AWS IAM. We will be leveraging an IAM role specifically crafted for use with GitHub Actions.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>1. Getting Your Java Build Tools Set Up</h3>
+
+<p>As mentioned previously, this tutorial uses the <em>maven</em> build tool. However if you’re using Gradle (or even Ant), the patterns should mostly be the same. You’d just need to change the build and test commands, if your application includes unit tests. By default, you can leverage the Spring <code class="language-plaintext highlighter-rouge">application.properties</code> configuration file. This file might contain environment-specific secrets or credentials, verbosity settings of your application logs, if any, as well as other database settings as an example. Here’s an example of an <code class="language-plaintext highlighter-rouge">application.properties</code> file that you might see for a Spring Boot maven project:</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>spring.datasource.url<span class="o">=</span>DB_CONNECTION
+spring.datasource.username<span class="o">=</span>DB_USERNAME
+spring.datasource.password<span class="o">=</span>DB_PASSWORD
+spring.datasource.driver-class-name<span class="o">=</span>org.postgresql.Driver
+
+<span class="c">#configure hibernate with postgresql</span>
+spring.jpa.properties.hibernate.dialect<span class="o">=</span>org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto<span class="o">=</span>update
+</code></pre></div></div>
+
+<p>Your application properties may vary, but notice how the sensitive properties such as the <code class="language-plaintext highlighter-rouge">datasource.url</code>, <code class="language-plaintext highlighter-rouge">datasource.username</code> and <code class="language-plaintext highlighter-rouge">datasource.password</code> have placeholders instead of the actual values. <strong>This is a very crucial step, especally if you have sensitive credentials such as your database connections strings.</strong> More on this in Section 4. However for now, just ensure that you’re not going to be committing any sensitive information to a public git repository.</p>
+
+<p>Ensure you can build your Spring Boot project by executing the appropriate build command. For maven, the command can be something like: <code class="language-plaintext highlighter-rouge">mvn -B package --file pom.xml -Dspring.config.location=./path/to/your/application.properties</code>. If you’re using an IDE such as IntelliJ IDEA, the appropriate build tooling should be available in the context menus.</p>
+
+<h3>2. Generating a GitHub Actions Workflow File</h3>
+
+<p>Once you’ve configured your build tooling to run, push the latest changes to your GitHub repository. We will now create a new GitHub Actions workflow.</p>
+
+<ol>
+  <li>
+    <p>Navigate to the landing page of your GitHub repository</p>
+  </li>
+  <li>
+    <p>Click on the “Actions” tab at the top menu bar. This will take you to the landing page of GitHub Actions</p>
+  </li>
+  <li>
+    <p>You may choose to click the “set up a workflow yourself” link, however GitHub is pretty good at understanding code context and will suggest appropriate workflows for your Spring project. For example, if you’re using Spring Boot with Maven, you should see a suggested workflow similar to “Java with Maven”. You can use their templates as a good starting point.</p>
+  </li>
+</ol>
+
+<p>Once you follow through with the suggested workflow, you should notice a new directory called <code class="language-plaintext highlighter-rouge">.github/workflows</code> created under your repository root. It should contain a <code class="language-plaintext highlighter-rouge">workflow.yml</code> file. It should look something similar to the YAML code below. We will break down each section of the file.</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">name</span><span class="pi">:</span> <span class="s">Spring Boot Test, Package, Deploy to AWS</span>
+
+<span class="na">on</span><span class="pi">:</span>
+  <span class="na">push</span><span class="pi">:</span>
+    <span class="na">branches</span><span class="pi">:</span> <span class="pi">[</span> <span class="s2">"</span><span class="s">main"</span> <span class="pi">]</span>
+  <span class="na">pull_request</span><span class="pi">:</span>
+    <span class="na">branches</span><span class="pi">:</span> <span class="pi">[</span> <span class="s2">"</span><span class="s">main"</span> <span class="pi">]</span>
+
+<span class="na">jobs</span><span class="pi">:</span>
+  <span class="na">build</span><span class="pi">:</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-latest</span>
+    <span class="na">steps</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/checkout@v3</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Set up JDK </span><span class="m">17</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/setup-java@v3</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">java-version</span><span class="pi">:</span> <span class="s1">'</span><span class="s">17'</span>
+          <span class="na">distribution</span><span class="pi">:</span> <span class="s1">'</span><span class="s">corretto'</span>
+          <span class="na">cache</span><span class="pi">:</span> <span class="s">maven</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Build with Maven</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="s">mvn -B package --file pom.xml -Dspring.config.location=./src/main/resources/application-prod.properties -P prod</span>
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">name</code> parameter tells GitHub Actions the name of your workflow for visibility to the end user.</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">...</span>
+<span class="na">on</span><span class="pi">:</span>
+  <span class="na">push</span><span class="pi">:</span>
+    <span class="na">branches</span><span class="pi">:</span> <span class="pi">[</span> <span class="s2">"</span><span class="s">main"</span> <span class="pi">]</span>
+  <span class="na">pull_request</span><span class="pi">:</span>
+    <span class="na">branches</span><span class="pi">:</span> <span class="pi">[</span> <span class="s2">"</span><span class="s">main"</span> <span class="pi">]</span>
+<span class="nn">...</span>
+</code></pre></div></div>
+
+<p>The above block of code tells GitHub Actions when to start runing your workflow. This can be interpreted as “run this particular workflow every time there is a commit pushed to the main branch, or if there is a Pull Request merged into the main branch”.</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">...</span>
+<span class="na">jobs</span><span class="pi">:</span>
+  <span class="na">build</span><span class="pi">:</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-latest</span>
+    <span class="na">steps</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/checkout@v3</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Set up JDK </span><span class="m">17</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/setup-java@v3</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">java-version</span><span class="pi">:</span> <span class="s1">'</span><span class="s">17'</span>
+          <span class="na">distribution</span><span class="pi">:</span> <span class="s1">'</span><span class="s">corretto'</span>
+          <span class="na">cache</span><span class="pi">:</span> <span class="s">maven</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Build with Maven</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="s">mvn -B package --file pom.xml -Dspring.config.location=./src/main/resources/application-prod.properties -P prod</span>
+<span class="nn">...</span>
+</code></pre></div></div>
+
+<p>This section instructs GitHub Actions’ machines on which jobs to run, what environments to run them in, as well as the names of the job. For example, the above code is specific to an Ubuntu instance. It sets up Java JDK 17 on that machine with the coretto distribution, and specifies a command to use maven to build the source code. Here is where you can specify your build tooling, as well as what specific paramters and commandd line arguments you would like to build your project with.</p>
+
+<p>Once you create and commit your final workflow file, ensure that it works by monitoring the build status of GitHub Actions. You should see a tiny status indication on the main branch in your repository. If the build succeeds, you should see a green check mark. If it fails, you’ll see a red cross. Below is an image for reference.</p>
+
+<p><img src="/images/20231212/buildpassing.png" alt="GitHub Actions Build Passing" title="GitHub Actions Build Passing" /></p>
+
+<p>Please ensure that your build passes before moving on to the next step, taking all necessary steps to troubleshoot any failures. <strong>One troubleshooting tip is that YAML code is whitespace sensitive.</strong></p>
+
+<h3>3. Creating an IAM user for GitHub Actions</h3>
+
+<p>Now that you’ve set up a GitHub Actions workflow, we will create a connection between the Actions workflow and AWS via an IAM user. Head on over to your AWS home page. If you’ve used IAM in the past, you can navigate to it directly from AWS. If this is your first time using IAM, use the search bar at the top of the AWS home page to search for “IAM” and navigate to its dashboard.</p>
+
+<ol>
+  <li>
+    <p>From the context menu on the left, navigate to “Users”</p>
+  </li>
+  <li>
+    <p>Click on “Create User”, and create a new user with a name like “github-actions”</p>
+  </li>
+  <li>
+    <p>On the next page, click on the “Attach policies directly” box. This will allow you to define what security and access policies this particular IAM role should have. Then, in the search box below, search for <code class="language-plaintext highlighter-rouge">AmazonS3FullAccess</code> as well as <code class="language-plaintext highlighter-rouge">AdministratorAccess-AWSElasticBeanstalk</code>. Make sure to check each of these policies for your user.</p>
+  </li>
+  <li>
+    <p>Review and create your new user</p>
+  </li>
+  <li>
+    <p>Finally, once the IAM user has been created successfully, make sure to save the generated <strong>Access Key ID</strong> and <strong>Secret Access Key</strong>. Additionally, if there is an option to download a CSV of the credentials, do that as well because you will not be able to access these secrets again! We will be adding these secrets to the GitHub repository to include in our workflow file.</p>
+  </li>
+</ol>
+
+<p><img src="/images/20231212/iam-1.png" alt="Creating an IAM User" title="Creating an IAM User" /></p>
+
+<p><img src="/images/20231212/iam-2.png" alt="Defining IAM user policies" title="Defining IAM user policies" /></p>
+
+<p><img src="/images/20231212/iam-3.png" alt="Review and Create IAM User" title="Review and Create IAM User" /></p>
+
+<p><strong>Note:</strong> if you run into issues with your IAM user after attaching the S3 and Elastic Beanstalk policies, consider granting <code class="language-plaintext highlighter-rouge">AdministratorAccess</code> to your IAM user. While this could expose security vulnerabilities with your pipeline, it can be a useful troubleshooting step if you run into errors or issues in the deployment steps further down.</p>
+
+<h3>4. Adding Application Secrets and Sensitive Environment Variables to GitHub</h3>
+
+<p>Now that we have our AWS IAM user set up, we will add the IAM access key and access key secret to the GitHub repository:</p>
+<ol>
+  <li>
+    <p>Navigate to the repository landing page and click on the “Settings” tab</p>
+  </li>
+  <li>
+    <p>Under the “Security” option in the sidebar, select “Secrets and Variables”, then “Codespaces”</p>
+  </li>
+  <li>
+    <p>Click on “New repository secret”</p>
+  </li>
+  <li>
+    <p>Enter the Names and Values of the secrets. Make sure to create meaningful names for the secrets, something like <code class="language-plaintext highlighter-rouge">IAM_ACCESS_KEY</code> and <code class="language-plaintext highlighter-rouge">IAM_ACCESS_KEY_SECRET</code></p>
+  </li>
+  <li>
+    <p>If you have other sensitive application secrets, such as the Spring datasource strings, database connections strings or API keys, this is a good time to enter those as well.</p>
+  </li>
+  <li>
+    <p>Add and save the secrets.</p>
+  </li>
+</ol>
+
+<p>This will allow you to access the secrets from the workflow file, while abstracting the values of the secrets from the public eye. For more information about repository secrets, check out <a href="https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions">the official documentation from GitHub</a>.</p>
+
+<h3>5. Modifying the Workflow File</h3>
+
+<p>Now that we have our AWS IAM user set up, as well our secrets saved, we will make some modifications to our workflow file to enable automatically deploying our code changes to our Elastic Beanstalk instance. Again, please make sure that you have your Elastic Beanstalk instance set up and ready to go. You should have the access to the following Elastic Beanstalk information:</p>
+<ul>
+  <li><strong>application name</strong> of your Beanstalk Spring Boot application</li>
+  <li><strong>environment name</strong> of your Beanstalk instance</li>
+  <li><strong>region name</strong> of your instance. This is just the availability zone of your app.</li>
+</ul>
+
+<p>We will be using the Action <code class="language-plaintext highlighter-rouge">einaregilsson/beanstalk-deploy@v21</code> to trigger the Beanstalk deployment. <strong>The full, updated workflow file is shown below.</strong></p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">name</span><span class="pi">:</span> <span class="s">Spring Boot Test, Package, Deploy to AWS</span>
+
+<span class="na">on</span><span class="pi">:</span>
+  <span class="na">push</span><span class="pi">:</span>
+    <span class="na">branches</span><span class="pi">:</span> <span class="pi">[</span> <span class="s2">"</span><span class="s">main"</span> <span class="pi">]</span>
+  <span class="na">pull_request</span><span class="pi">:</span>
+    <span class="na">branches</span><span class="pi">:</span> <span class="pi">[</span> <span class="s2">"</span><span class="s">main"</span> <span class="pi">]</span>
+
+<span class="na">jobs</span><span class="pi">:</span>
+  <span class="na">build</span><span class="pi">:</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-latest</span>
+    <span class="na">steps</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/checkout@v3</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Set up JDK </span><span class="m">17</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/setup-java@v3</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">java-version</span><span class="pi">:</span> <span class="s1">'</span><span class="s">17'</span>
+          <span class="na">distribution</span><span class="pi">:</span> <span class="s1">'</span><span class="s">corretto'</span>
+          <span class="na">cache</span><span class="pi">:</span> <span class="s">maven</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Build with Maven</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="s">mvn -B package --file pom.xml -Dspring.config.location=./src/main/resources/application-prod.properties -P prod</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Upload RestoHub JAR</span>  <span class="c1"># this will upload the build .jar file and make it available for the deployment step</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/upload-artifact@v3</span>          
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">name</span><span class="pi">:</span> <span class="s">artifact</span>
+          <span class="na">path</span><span class="pi">:</span> <span class="s">./target/Restohub-0.0.1-SNAPSHOT.jar</span> <span class="c1"># you'll need to change the name of your own jar file here</span>
+  <span class="na">deploy</span><span class="pi">:</span>
+    <span class="na">needs</span><span class="pi">:</span> <span class="s">build</span>
+    <span class="na">name</span><span class="pi">:</span> <span class="s">Deploy to AWS EBS</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-latest</span>
+    <span class="na">steps</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Download RestoHub JAR</span> <span class="c1"># download the jar that was uploaded in the previous steps</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/download-artifact@v2.1.1</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">name</span><span class="pi">:</span> <span class="s">artifact</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Deploy to ElasticBeanstalk</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">einaregilsson/beanstalk-deploy@v21</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">aws_access_key</span><span class="pi">:</span> <span class="s">$</span> <span class="c1"># pull the IAM_ACCESS_KEY from the saved repo secrets</span>
+          <span class="na">aws_secret_key</span><span class="pi">:</span> <span class="s">$</span> <span class="c1"># pull the IAM_ACCESS_KEY_SECRET from the saved repo secrets</span>
+          <span class="na">application_name</span><span class="pi">:</span> <span class="s">restohub-api</span> <span class="c1"># change this to your own application name from Elastic Beanstalk</span>
+          <span class="na">environment_name</span><span class="pi">:</span> <span class="s">Restohub-api-environment</span> <span class="c1"># change this to your own environment name from Elastic Beanstalk</span>
+          <span class="na">version_label</span><span class="pi">:</span> <span class="s">$</span> <span class="c1"># unique version number of your app, we are using the GitHub commit SHA as an identifier</span>
+          <span class="na">region</span><span class="pi">:</span> <span class="s">us-east-2</span> <span class="c1"># change this to your Elastic Beanstalk region!</span>
+          <span class="na">deployment_package</span><span class="pi">:</span> <span class="s">Restohub-0.0.1-SNAPSHOT.jar</span> <span class="c1"># name of your generated jar file</span>
+</code></pre></div></div>
+
+<p>Let’s review the changes to our workflow file.</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">...</span>
+<span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Upload RestoHub JAR</span>  <span class="c1"># this will upload the build .jar file and make it available for the deployment step</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/upload-artifact@v3</span>          
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">name</span><span class="pi">:</span> <span class="s">artifact</span>
+          <span class="na">path</span><span class="pi">:</span> <span class="s">./target/Restohub-0.0.1-SNAPSHOT.jar</span> <span class="c1"># you'll need to change the name of your own jar file here</span>
+<span class="nn">...</span>
+</code></pre></div></div>
+
+<p>This snippet uses the “upload-artifact” Action to upload the generated JAR file to GitHub’s storage temporarily. This will allow the subsequent steps to reference this uploaded artifact for deployment to AWS.</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">...</span>
+<span class="na">deploy</span><span class="pi">:</span>
+    <span class="na">needs</span><span class="pi">:</span> <span class="s">build</span>
+    <span class="na">name</span><span class="pi">:</span> <span class="s">Deploy to AWS EBS</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-latest</span>
+    <span class="na">steps</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Download RestoHub JAR</span> <span class="c1"># download the jar that was uploaded in the previous steps</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/download-artifact@v2.1.1</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">name</span><span class="pi">:</span> <span class="s">artifact</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Deploy to ElasticBeanstalk</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">einaregilsson/beanstalk-deploy@v21</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">aws_access_key</span><span class="pi">:</span> <span class="s">$</span> <span class="c1"># pull the IAM_ACCESS_KEY from the saved repo secrets</span>
+          <span class="na">aws_secret_key</span><span class="pi">:</span> <span class="s">$</span> <span class="c1"># pull the IAM_ACCESS_KEY_SECRET from the saved repo secrets</span>
+          <span class="na">application_name</span><span class="pi">:</span> <span class="s">restohub-api</span> <span class="c1"># change this to your own application name from Elastic Beanstalk</span>
+          <span class="na">environment_name</span><span class="pi">:</span> <span class="s">Restohub-api-environment</span> <span class="c1"># change this to your own environment name from Elastic Beanstalk</span>
+          <span class="na">version_label</span><span class="pi">:</span> <span class="s">$</span> <span class="c1"># unique version number of your app, we are using the GitHub commit SHA as an identifier</span>
+          <span class="na">region</span><span class="pi">:</span> <span class="s">us-east-2</span> <span class="c1"># change this to your Elastic Beanstalk region!</span>
+          <span class="na">deployment_package</span><span class="pi">:</span> <span class="s">Restohub-0.0.1-SNAPSHOT.jar</span> <span class="c1"># name of your generated jar file</span>
+</code></pre></div></div>
+
+<p>In this new <code class="language-plaintext highlighter-rouge">deploy</code> step of the workflow, we are performing the following actions:</p>
+
+<ol>
+  <li>
+    <p>Download the artifact previously uploaded using the <code class="language-plaintext highlighter-rouge">download-artifact</code> action</p>
+  </li>
+  <li>
+    <p>Deploy to Elastic Beanstalk using the <code class="language-plaintext highlighter-rouge">beanstalk-deploy</code> action. Make sure to reference YOUR application specific properties here, such as the secrets, application and environment names, as well as the region and JAR file.</p>
+  </li>
+</ol>
+
+<p>This should be all that’s needed to get your workflow file setup for deployment to Elastic Beanstalk.</p>
+
+<h3>6. Testing the Deployment to Elastic Beanstalk</h3>
+
+<p>Go ahead and commit these changes, ensuring again that the YAML formatting is correct. GitHub should kick off a new build from the main branch of your repository. You can monitor the build by clicking on the “Actions” tab on your repository, then navigating to the Workflow that you defined. You should be able to see a build log, indicating what steps are being completed in real time, and where the errors were, if any. If everything went smoothly, your app should be deployed to your Elastic Beanstalk instance successfully! You can verify this by heading over to your Beanstalk landing page and viewing the updated status of your app, such as when it was last updated and the version name. If the status is Green, you have been successful!</p>
+
+<h3>7. (Optional) Creating Environment-Specific Workflows</h3>
+
+<p>If your build step contains unit tests, or if you have separate environments like a development environment, an integration environment and a dedicated production environment, you might want to consider creating specific workflows for each of these environments. Additionally, if you have feature branches and have a main/master branch that contains all changes that make it to a specific environment, you might also want to consider creating some specific workflows for your branches. In our case, we are only ever deploying to Elastic Beanstalk from the main branch. However we are building and running our test suite on all other branches that there are code changes to.</p>
+
+<p>Below is the full <code class="language-plaintext highlighter-rouge">production.yml</code> workflow that we used for our production AWS Elastic Beanstalk instance:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">name</span><span class="pi">:</span> <span class="s">Spring Boot Test, Package, Deploy to AWS</span>
+
+<span class="na">on</span><span class="pi">:</span>
+  <span class="na">push</span><span class="pi">:</span>
+    <span class="na">branches</span><span class="pi">:</span> <span class="pi">[</span> <span class="s2">"</span><span class="s">main"</span> <span class="pi">]</span>
+  <span class="na">pull_request</span><span class="pi">:</span>
+    <span class="na">branches</span><span class="pi">:</span> <span class="pi">[</span> <span class="s2">"</span><span class="s">main"</span> <span class="pi">]</span>
+
+<span class="na">jobs</span><span class="pi">:</span>
+  <span class="na">build</span><span class="pi">:</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-latest</span>
+    <span class="na">steps</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/checkout@v3</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Set up JDK </span><span class="m">17</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/setup-java@v3</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">java-version</span><span class="pi">:</span> <span class="s1">'</span><span class="s">17'</span>
+          <span class="na">distribution</span><span class="pi">:</span> <span class="s1">'</span><span class="s">corretto'</span>
+          <span class="na">cache</span><span class="pi">:</span> <span class="s">maven</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Write DB Connection</span>
+        <span class="na">env</span><span class="pi">:</span>
+          <span class="na">DB_CONNECTION</span><span class="pi">:</span> <span class="s">$</span>
+          <span class="na">DB_USERNAME</span><span class="pi">:</span> <span class="s">$</span>
+          <span class="na">DB_PASSWORD</span><span class="pi">:</span> <span class="s">$</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="pi">|</span>
+          <span class="s">import os</span>
+          <span class="s">with open('./src/main/resources/application-prod.properties', 'r') as file:</span>
+            <span class="s">filedata = file.read()</span>
+          <span class="s">filedata = filedata.replace('DB_CONNECTION', os.getenv('DB_CONNECTION'))</span>
+          <span class="s">filedata = filedata.replace('DB_USERNAME', os.getenv('DB_USERNAME'))</span>
+          <span class="s">filedata = filedata.replace('DB_PASSWORD', os.getenv('DB_PASSWORD'))</span>
+          <span class="s">with open('./src/main/resources/application-prod.properties', 'w') as file:</span>
+            <span class="s">file.write(filedata)</span>
+        <span class="na">shell</span><span class="pi">:</span> <span class="s">python</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Build with Maven</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="s">mvn -B package --file pom.xml -DskipTests -Dspring.config.location=./src/main/resources/application-prod.properties -P prod</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Upload RestoHub JAR</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/upload-artifact@v3</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">name</span><span class="pi">:</span> <span class="s">artifact</span>
+          <span class="na">path</span><span class="pi">:</span> <span class="s">./target/Restohub-0.0.1-SNAPSHOT.jar</span>
+  <span class="na">deploy</span><span class="pi">:</span>
+    <span class="na">needs</span><span class="pi">:</span> <span class="s">build</span>
+    <span class="na">name</span><span class="pi">:</span> <span class="s">Deploy to AWS EBS</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-latest</span>
+    <span class="na">steps</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Download RestoHub JAR</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/download-artifact@v2.1.1</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">name</span><span class="pi">:</span> <span class="s">artifact</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Deploy to ElasticBeanstalk</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">einaregilsson/beanstalk-deploy@v21</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">aws_access_key</span><span class="pi">:</span> <span class="s">$</span>
+          <span class="na">aws_secret_key</span><span class="pi">:</span> <span class="s">$</span>
+          <span class="na">application_name</span><span class="pi">:</span> <span class="s">restohub-api</span>
+          <span class="na">environment_name</span><span class="pi">:</span> <span class="s">Restohub-api-environment</span>
+          <span class="na">version_label</span><span class="pi">:</span> <span class="s">$</span>
+          <span class="na">region</span><span class="pi">:</span> <span class="s">us-east-2</span>
+          <span class="na">deployment_package</span><span class="pi">:</span> <span class="s">Restohub-0.0.1-SNAPSHOT.jar</span>
+</code></pre></div></div>
+
+<p>Remember when we said we’d come back to dealing with Spring application secrets and oter application-sensitive information? Well, this is how those become useful! Here we are saving all sensitive secrets and properties to the GitHub repository secrets. In the “Write DB Connection” step above, we are referencing our saved secrets to inject into the <code class="language-plaintext highlighter-rouge">application.properties</code> file here using some python scripting. We leverage GitHub Actions to dynamically fetch the <code class="language-plaintext highlighter-rouge">DB_CONNECTION</code>, <code class="language-plaintext highlighter-rouge">DB_USERNAME</code> and <code class="language-plaintext highlighter-rouge">DB_PASSWORD</code> strings, and replace them in our properties file. Also notice how we are skipping tests with the maven <code class="language-plaintext highlighter-rouge">-DskipTests</code> flag for our production workflow. All changes are already tested when pushed to other branches.</p>
+
+<hr />
+
+<p>CI/CD enables a great level of automation for building, testing and deploying software, and GitHub Actions makes getting your feet wet with CI/CD very simple. With a wide range of user-created automations already publicly available, GitHub Actions allows users to greatly customize their own workflows. In this tutorial, we leveraged the <code class="language-plaintext highlighter-rouge">einaregilsson/beanstalk-deploy@v21</code> workflow, as well as GitHub-provided automations such as <code class="language-plaintext highlighter-rouge">actions/download-artifact@v2.1.1</code> and <code class="language-plaintext highlighter-rouge">actions/upload-artifact@v3</code>. We combined the use of GitHub and open-source to push a Spring Boot REST API to the public cloud on AWS. This reduces the manual overhead of having to manually copy over and deploy changes to our AWS Elastic Beanstalk instance, greatly increasing developer productivity by redirecting their focus on crafting robust and scalable APIs.</p>
+
+
+  </div>
+
+  
+
+</article>
+
+      </div>
+    </main>
+
+    <br>
+    
+    <br>
+<footer class="site-footer">
+
+  <div class="wrapper">
+
+    <p>
+      
+
+<!-- Subscribe via <a href="http://localhost:4000/feed.xml">RSS</a> -->
+<br>
+&copy; 2018-2023 Habib ur Rehman 
+<br>
+Jekyll theme by <a href="https://github.com/yous/whiteglass">yous</a>
+
+    </p>
+  
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
