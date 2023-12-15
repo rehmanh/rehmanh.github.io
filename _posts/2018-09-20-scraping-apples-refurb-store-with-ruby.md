@@ -13,9 +13,9 @@ Last week Apple announced their new lineup of iPhones, just like they do every y
 
 If you want to save even more money (like myself) and still want a premium Apple warranty, you buy refurbished! The nice thing about refurbished Apple products is that they are in essence, products that were originally in great condition – either returned by unhappy customers or pulled from Apple's display units in stores. The refurbishment process includes swapping the old battery for a new one, wiping the phone clean and replacing parts that had cosmetic damage. So what you end up getting is basically a brand new device for cheap. The thing about these refurbished devices though, is that people seem to jump on them very quickly, so they sell out just as fast. What we are going to do is devise a system that will notify us when the iPhone 8 is available for purchase on Apple's Refurbished Store. Let's get started! 
 
-I'm going to be using Ruby to scrape the Apple Store site, simply because the use of gems and the syntax makes it very easy to perform this action in a minimal amount of code. The gems that I am going to be using are 'open-uri' to access files on the web, 'nokogiri' to collect information from HTML pages and 'gmail' to create a notification system. 
-
 <!-- more -->
+
+I'm going to be using Ruby to scrape the Apple Store site, simply because the use of gems and the syntax makes it very easy to perform this action in a minimal amount of code. The gems that I am going to be using are 'open-uri' to access files on the web, 'nokogiri' to collect information from HTML pages and 'gmail' to create a notification system. 
 
 ### 1. Set up
 
